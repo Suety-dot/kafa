@@ -40,14 +40,14 @@ export function Shell({ children, modo }: { children: React.ReactNode; modo: str
         </p>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col pb-20 md:pb-0">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
 
-      <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] backdrop-blur md:hidden">
         {NAV.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className={cn("flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground", activo(href) && "font-semibold text-primary")}
+            className={cn("flex min-h-14 flex-col items-center justify-center gap-1 pt-1 text-[11px] text-muted-foreground", activo(href) && "font-semibold text-primary")}
           >
             <Icon className="size-5" aria-hidden />
             {label}
