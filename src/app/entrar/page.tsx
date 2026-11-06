@@ -1,29 +1,16 @@
-"use client";
-import { useActionState } from "react";
-import { entrar } from "@/app/acciones";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Field, Input } from "@/components/ui/input";
+import { hayUsuarios } from "@/lib/usuarios";
+import { claveApp } from "@/lib/clave";
+import { PantallaEntrada } from "./cliente";
 
-export default function Entrar() {
-  const [estado, accion, enviando] = useActionState(entrar, null);
-  return (
-    <main className="flex flex-1 items-center justify-center p-6">
-      <Card className="w-full max-w-sm p-6">
-        <form action={accion} className="flex flex-col gap-4">
-          <div>
-            <p className="text-xl font-bold">Kafa</p>
-            <p className="text-sm text-muted-foreground">Café Formemos · escribe la clave de acceso</p>
-          </div>
-          <Field label="Clave" htmlFor="clave">
-            <Input id="clave" name="clave" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
-          </Field>
-          {estado?.error ? <p className="text-sm font-medium text-red-700">{estado.error}</p> : null}
-          <Button type="submit" disabled={enviando}>
-            Entrar
-          </Button>
-        </form>
-      </Card>
-    </main>
-  );
+export const dynamic = "force-dynamic";
+
+export default async function Entrar() {
+  let primeraVez = false;
+  let error: string | null = null;
+  try {
+    primeraVez = !(await hayUsuarios());
+  } catch (e) {
+    error = (e as Error).message;
+  }
+  return <PantallaEntrada primeraVez={primeraVez} pideInstalacion={!!claveApp()} errorInicial={error} />;
 }

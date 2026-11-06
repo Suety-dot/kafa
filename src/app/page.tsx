@@ -5,6 +5,10 @@ import { Card } from "@/components/ui/card";
 import { almacen } from "@/lib/store";
 import { calcular, fmt, pct, pesos } from "@/lib/metricas";
 import { margenLbTena } from "@/lib/modelo";
+import { sesionActual } from "@/lib/sesion-servidor";
+import { primerNombre } from "@/lib/sesion";
+import { salir } from "@/app/acciones";
+import { LogOut, Users } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +21,7 @@ const MENSAJE: Record<string, string> = {
 
 export default async function Inicio({ searchParams }: { searchParams: Promise<{ guardado?: string }> }) {
   const { guardado } = await searchParams;
+  const yo = await sesionActual();
   const d = await almacen().leerTodo();
   const m = calcular(d);
   const ultimo = m.compras.recientes.at(-1);
@@ -38,7 +43,24 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-6">
-      <Encabezado titulo="Hola" sub={new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(new Date())} />
+      <Encabezado
+        titulo={yo ? `Hola, ${primerNombre(yo.nombre)}` : "Hola"}
+        sub={new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric", timeZone: "America/Bogota" }).format(new Date())}
+        accion={
+          <div className="flex gap-2 md:hidden">
+            {yo?.rol === "admin" ? (
+              <Link href="/usuarios" className="flex h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground">
+                <Users className="size-4" aria-hidden /> Usuarios
+              </Link>
+            ) : null}
+            <form action={salir}>
+              <button type="submit" className="flex h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground">
+                <LogOut className="size-4" aria-hidden /> Salir
+              </button>
+            </form>
+          </div>
+        }
+      />
 
       <div className="flex flex-col gap-4 px-5 md:px-8">
         {guardado && MENSAJE[guardado] ? (

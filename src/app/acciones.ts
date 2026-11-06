@@ -5,19 +5,28 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { almacen } from "@/lib/store";
 import { claveApp } from "@/lib/clave";
+import { COOKIE, firmar, opcionesCookie, verificar, type Sesion } from "@/lib/sesion";
+import { cifrar, comprobar } from "@/lib/claves";
+import * as usuarios from "@/lib/usuarios";
 
 /**
  * Acciones del servidor. Cada una valida lo que llega (las acciones se pueden llamar por POST directo)
- * y exige la sesión cuando la aplicación tiene clave de acceso (APP_CLAVE).
+ * y exige una sesión de usuario válida.
  */
 
-export type Resultado = { ok: boolean; error?: string };
+export type Resultado = { ok: boolean; error?: string; mensaje?: string };
 
-async function exigirSesion() {
-  const clave = claveApp();
-  if (!clave) return;
+async function exigirSesion(): Promise<Sesion> {
   const c = await cookies();
-  if (c.get("kafa_sesion")?.value !== clave) throw new Error("Sin sesión");
+  const s = await verificar(c.get(COOKIE)?.value);
+  if (!s) redirect("/entrar");
+  return s;
+}
+
+async function exigirAdmin(): Promise<Sesion> {
+  const s = await exigirSesion();
+  if (s.rol !== "admin") throw new Error("Solo un administrador puede hacer esto.");
+  return s;
 }
 
 const num = z.coerce.number().finite();
@@ -29,7 +38,7 @@ function refrescar() {
 }
 
 export async function guardarCompra(_: Resultado | null, fd: FormData): Promise<Resultado> {
-  await exigirSesion();
+  const yo = await exigirSesion();
   const r = z
     .object({
       fecha,
@@ -45,13 +54,13 @@ export async function guardarCompra(_: Resultado | null, fd: FormData): Promise<
     .safeParse(Object.fromEntries(fd));
   if (!r.success) return { ok: false, error: "Revisa los campos: falta la calidad, la unidad o un número no es válido." };
   const { leidaPorIa, ...c } = r.data;
-  await almacen().agregarCompra({ ...c, leidaPorIa: leidaPorIa === "1", nota: c.nota || null });
+  await almacen().agregarCompra({ ...c, leidaPorIa: leidaPorIa === "1", nota: c.nota || null, registradoPor: yo.usuario });
   refrescar();
   redirect("/?guardado=compra");
 }
 
 export async function guardarBache(_: Resultado | null, fd: FormData): Promise<Resultado> {
-  await exigirSesion();
+  const yo = await exigirSesion();
   const r = z
     .object({
       fecha,
@@ -71,13 +80,14 @@ export async function guardarBache(_: Resultado | null, fd: FormData): Promise<R
     caficultor: r.data.tipo === "servicio" ? r.data.caficultor || null : null,
     operadores,
     pedagogico: r.data.pedagogico === "on",
+    registradoPor: yo.usuario,
   });
   refrescar();
   redirect("/?guardado=bache");
 }
 
 export async function guardarVenta(_: Resultado | null, fd: FormData): Promise<Resultado> {
-  await exigirSesion();
+  const yo = await exigirSesion();
   const r = z
     .object({
       fecha,
@@ -89,13 +99,13 @@ export async function guardarVenta(_: Resultado | null, fd: FormData): Promise<R
     })
     .safeParse(Object.fromEntries(fd));
   if (!r.success) return { ok: false, error: "Revisa la línea, el origen, las libras y el precio." };
-  await almacen().agregarVenta(r.data);
+  await almacen().agregarVenta({ ...r.data, registradoPor: yo.usuario });
   refrescar();
   redirect("/?guardado=venta");
 }
 
 export async function guardarGasto(_: Resultado | null, fd: FormData): Promise<Resultado> {
-  await exigirSesion();
+  const yo = await exigirSesion();
   const r = z
     .object({
       fecha,
@@ -105,17 +115,81 @@ export async function guardarGasto(_: Resultado | null, fd: FormData): Promise<R
     })
     .safeParse(Object.fromEntries(fd));
   if (!r.success) return { ok: false, error: "Revisa el tipo y el valor." };
-  await almacen().agregarGasto({ ...r.data, descripcion: r.data.descripcion || null });
+  await almacen().agregarGasto({ ...r.data, descripcion: r.data.descripcion || null, registradoPor: yo.usuario });
   refrescar();
   redirect("/?guardado=gasto");
 }
 
-export async function entrar(_: Resultado | null, fd: FormData): Promise<Resultado> {
-  const clave = claveApp();
-  const escrita = String(fd.get("clave") ?? "").trim();
-  if (!clave) redirect("/");
-  if (escrita !== clave) return { ok: false, error: "Clave incorrecta. Revisa mayúsculas y que sea la misma de APP_CLAVE en Vercel." };
+async function iniciarSesion(u: usuarios.Usuario) {
   const c = await cookies();
-  c.set("kafa_sesion", clave, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 30, path: "/" });
+  c.set(COOKIE, await firmar({ uid: u.id, usuario: u.usuario, nombre: u.nombre, rol: u.rol }), opcionesCookie);
+}
+
+const esquemaUsuario = z.object({
+  usuario: z.string().trim().toLowerCase().regex(/^[a-z0-9._-]{3,30}$/, "El usuario debe tener entre 3 y 30 letras o números, sin espacios."),
+  nombre: z.string().trim().min(2, "Escribe el nombre.").max(60),
+  clave: z.string().min(8, "La contraseña debe tener al menos 8 caracteres.").max(100),
+});
+
+export async function entrar(_: Resultado | null, fd: FormData): Promise<Resultado> {
+  const usuario = String(fd.get("usuario") ?? "");
+  const clave = String(fd.get("clave") ?? "");
+  let u: usuarios.Usuario | null;
+  try {
+    u = await usuarios.buscar(usuario);
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+  if (!u || !u.activo || !comprobar(clave, u.claveHash)) return { ok: false, error: "Usuario o contraseña incorrectos." };
+  await iniciarSesion(u);
   redirect("/");
+}
+
+/** Crea el primer administrador. Solo funciona si no hay usuarios y pide la APP_CLAVE como clave de instalación. */
+export async function crearPrimerAdmin(_: Resultado | null, fd: FormData): Promise<Resultado> {
+  if (await usuarios.hayUsuarios()) return { ok: false, error: "Ya hay usuarios creados. Entra con tu usuario." };
+  const instalacion = claveApp();
+  if (instalacion && String(fd.get("instalacion") ?? "").trim() !== instalacion)
+    return { ok: false, error: "La clave de instalación no coincide con APP_CLAVE de Vercel." };
+  const r = esquemaUsuario.safeParse(Object.fromEntries(fd));
+  if (!r.success) return { ok: false, error: r.error.issues[0].message };
+  await usuarios.crear({ usuario: r.data.usuario, nombre: r.data.nombre, rol: "admin", claveHash: cifrar(r.data.clave), activo: true });
+  const u = await usuarios.buscar(r.data.usuario);
+  if (u) await iniciarSesion(u);
+  redirect("/");
+}
+
+export async function crearUsuario(_: Resultado | null, fd: FormData): Promise<Resultado> {
+  await exigirAdmin();
+  const r = esquemaUsuario.extend({ rol: z.enum(["admin", "registro"]) }).safeParse(Object.fromEntries(fd));
+  if (!r.success) return { ok: false, error: r.error.issues[0].message };
+  try {
+    await usuarios.crear({ usuario: r.data.usuario, nombre: r.data.nombre, rol: r.data.rol, claveHash: cifrar(r.data.clave), activo: true });
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+  revalidatePath("/usuarios");
+  return { ok: true, mensaje: `Usuario ${r.data.usuario} creado. Pásale la contraseña en persona.` };
+}
+
+export async function cambiarActivo(fd: FormData) {
+  const yo = await exigirAdmin();
+  const id = String(fd.get("id") ?? "");
+  if (id && id !== yo.uid) await usuarios.actualizar(id, { activo: fd.get("activo") === "1" });
+  revalidatePath("/usuarios");
+}
+
+export async function restablecerClave(_: Resultado | null, fd: FormData): Promise<Resultado> {
+  await exigirAdmin();
+  const id = String(fd.get("id") ?? "");
+  const clave = String(fd.get("clave") ?? "");
+  if (clave.length < 8) return { ok: false, error: "La contraseña debe tener al menos 8 caracteres." };
+  await usuarios.actualizar(id, { claveHash: cifrar(clave) });
+  return { ok: true, mensaje: "Contraseña cambiada." };
+}
+
+export async function salir() {
+  const c = await cookies();
+  c.delete(COOKIE);
+  redirect("/entrar");
 }

@@ -3,6 +3,8 @@ import "./globals.css";
 import { Shell } from "@/components/shell";
 import { almacen } from "@/lib/store";
 import { RegistrarSW } from "@/components/registrar-sw";
+import { Splash } from "@/components/splash";
+import { sesionActual } from "@/lib/sesion-servidor";
 
 export const metadata: Metadata = {
   title: "Kafa · Café Formemos",
@@ -17,7 +19,8 @@ export const viewport: Viewport = {
   themeColor: "#fafafa",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const s = await sesionActual();
   return (
     <html lang="es">
       <head>
@@ -27,7 +30,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="antialiased">
         <RegistrarSW />
-        <Shell modo={almacen().modo}>{children}</Shell>
+        <Splash />
+        <Shell modo={almacen().modo} usuario={s ? { nombre: s.nombre, rol: s.rol } : null}>
+          {children}
+        </Shell>
       </body>
     </html>
   );

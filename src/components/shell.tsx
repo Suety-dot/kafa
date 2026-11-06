@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FileText, Home, PlusCircle } from "lucide-react";
+import { BarChart3, FileText, Home, LogOut, PlusCircle, Users } from "lucide-react";
+import { salir } from "@/app/acciones";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -11,7 +12,7 @@ const NAV = [
   { href: "/informe", label: "Informe", icon: FileText },
 ];
 
-export function Shell({ children, modo }: { children: React.ReactNode; modo: string }) {
+export function Shell({ children, modo, usuario }: { children: React.ReactNode; modo: string; usuario: { nombre: string; rol: string } | null }) {
   const path = usePathname();
   const activo = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   if (path === "/entrar") return <div className="flex min-h-dvh flex-col">{children}</div>;
@@ -35,9 +36,23 @@ export function Shell({ children, modo }: { children: React.ReactNode; modo: str
             {label}
           </Link>
         ))}
-        <p className="mt-auto px-2 text-xs text-muted-foreground">
-          {modo === "memoria" ? "Datos de ejemplo en memoria" : "Datos guardados en Supabase"}
-        </p>
+        {usuario?.rol === "admin" ? (
+          <Link href="/usuarios" className={cn("flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-zinc-700 hover:bg-muted", activo("/usuarios") && "bg-muted font-semibold text-foreground")}>
+            <Users className="size-4" aria-hidden />
+            Usuarios
+          </Link>
+        ) : null}
+        <div className="mt-auto flex flex-col gap-2 px-2">
+          {usuario ? (
+            <form action={salir} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
+              <span className="min-w-0 truncate text-sm font-medium">{usuario.nombre}</span>
+              <button type="submit" className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted" aria-label="Cerrar sesión">
+                <LogOut className="size-3.5" aria-hidden /> Salir
+              </button>
+            </form>
+          ) : null}
+          <p className="text-xs text-muted-foreground">{modo === "memoria" ? "Datos de ejemplo en memoria" : "Datos guardados en Supabase"}</p>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>

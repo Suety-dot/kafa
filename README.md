@@ -33,6 +33,10 @@ npm run celular
 
 Busca la IP de tu PC con `ipconfig` (línea "Dirección IPv4", por ejemplo 192.168.1.20) y abre `http://192.168.1.20:3000` en el celular. Si Windows pregunta por el firewall, permite el acceso en redes privadas. En el celular, "Agregar a pantalla de inicio" la deja como una app.
 
+## Usuarios
+
+Cada persona entra con su usuario y contraseña. La primera vez que se abre Kafa no hay usuarios: la pantalla pide crear el administrador con la clave de instalación (`APP_CLAVE`). Desde **Usuarios** el administrador crea las cuentas del equipo, cambia contraseñas y desactiva cuentas. Las contraseñas se guardan cifradas (scrypt) y la sesión dura 30 días. Opcional: define `SESION_SECRETO` para firmar las sesiones con un secreto propio.
+
 ## Activar la IA
 
 Copia `.env.example` como `.env.local` y elige un proveedor:
@@ -43,7 +47,7 @@ Copia `.env.example` como `.env.local` y elige un proveedor:
 ## Guardar los datos de verdad (Supabase)
 
 1. Crea un proyecto en [Supabase](https://supabase.com).
-2. En el SQL Editor, ejecuta `supabase/esquema.sql`. Para la demostración, ejecuta después `supabase/datos-ejemplo.sql`.
+2. En el SQL Editor, ejecuta `supabase/esquema.sql` (si ya lo habías ejecutado antes de que existieran los usuarios, ejecuta también `supabase/usuarios.sql`). Para la demostración, ejecuta después `supabase/datos-ejemplo.sql`.
 3. En Project Settings > API copia la URL y la clave secreta (`service_role` o `sb_secret_...`, según la versión de Supabase) a `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` de `.env.local`.
 
 La clave `service_role` solo se usa en el servidor. No la subas a GitHub (`.env.local` está en `.gitignore`).

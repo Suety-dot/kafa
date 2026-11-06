@@ -8,7 +8,7 @@ Aplicación de registro y seguimiento del café de la Fundación Formemos (Tena,
 2. **La aplicación funciona sin IA.** Con `IA_PROVEEDOR=ninguno` todo registro y todo cálculo sigue funcionando.
 3. **Privacidad.** Caficultores y clientes se registran con identificadores ("Caficultor 017"), nunca con nombres. A la IA no se le envían nombres de personas.
 4. **Las fórmulas siguen el libro `Etapa3_Escenarios_Formemos.xlsx`.** Si cambias un supuesto, cámbialo en `SUPUESTOS` y deja la fuente en un comentario.
-5. **Toda acción del servidor valida su entrada con zod y exige sesión** cuando `APP_CLAVE` está definida.
+5. **Toda acción del servidor valida su entrada con zod y exige una sesión de usuario** (`src/lib/sesion.ts`, cookie firmada). Las contraseñas solo se guardan cifradas con scrypt (`src/lib/claves.ts`).
 
 ## Estilo
 

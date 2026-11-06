@@ -11,6 +11,8 @@ export interface Compra {
   fecha: string; // AAAA-MM-DD
   /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
   creado?: string;
+  /** Usuario que hizo el registro. */
+  registradoPor?: string | null;
   caficultor: string;
   calidad: Calidad;
   unidad: Unidad;
@@ -26,6 +28,8 @@ export interface Bache {
   fecha: string; // AAAA-MM-DD
   /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
   creado?: string;
+  /** Usuario que hizo el registro. */
+  registradoPor?: string | null;
   tipo: "servicio" | "propio";
   caficultor?: string | null;
   kilosCps: number;
@@ -40,6 +44,8 @@ export interface Venta {
   fecha: string; // AAAA-MM-DD
   /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
   creado?: string;
+  /** Usuario que hizo el registro. */
+  registradoPor?: string | null;
   cliente: string;
   linea: Linea;
   origen: Origen;
@@ -52,6 +58,8 @@ export interface Gasto {
   fecha: string; // AAAA-MM-DD
   /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
   creado?: string;
+  /** Usuario que hizo el registro. */
+  registradoPor?: string | null;
   tipo: TipoGasto;
   valor: number;
   descripcion?: string | null;

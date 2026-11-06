@@ -63,3 +63,19 @@ alter table baches enable row level security;
 alter table ventas enable row level security;
 alter table gastos enable row level security;
 alter table estado enable row level security;
+
+-- Usuarios y autor de cada registro (también en supabase/usuarios.sql).
+create table if not exists usuarios (
+  id uuid primary key default gen_random_uuid(),
+  usuario text not null unique,
+  nombre text not null,
+  rol text not null default 'registro' check (rol in ('admin','registro')),
+  clave_hash text not null,
+  activo boolean not null default true,
+  created_at timestamptz default now()
+);
+alter table usuarios enable row level security;
+alter table compras add column if not exists registrado_por text;
+alter table baches add column if not exists registrado_por text;
+alter table ventas add column if not exists registrado_por text;
+alter table gastos add column if not exists registrado_por text;
