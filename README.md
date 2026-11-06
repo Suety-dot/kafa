@@ -43,8 +43,8 @@ Copia `.env.example` como `.env.local` y elige un proveedor:
 ## Guardar los datos de verdad (Supabase)
 
 1. Crea un proyecto en [Supabase](https://supabase.com).
-2. En el SQL Editor, ejecuta `supabase/esquema.sql`.
-3. En Project Settings > API copia la URL y la clave `service_role` a `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` de `.env.local`.
+2. En el SQL Editor, ejecuta `supabase/esquema.sql`. Para la demostración, ejecuta después `supabase/datos-ejemplo.sql`.
+3. En Project Settings > API copia la URL y la clave secreta (`service_role` o `sb_secret_...`, según la versión de Supabase) a `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` de `.env.local`.
 
 La clave `service_role` solo se usa en el servidor. No la subas a GitHub (`.env.local` está en `.gitignore`).
 
