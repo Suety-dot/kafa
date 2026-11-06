@@ -35,7 +35,7 @@ Busca la IP de tu PC con `ipconfig` (línea "Dirección IPv4", por ejemplo 192.1
 
 ## Usuarios
 
-Cada persona entra con su usuario y contraseña. La primera vez que se abre Kafa no hay usuarios: la pantalla pide crear el administrador con la clave de instalación (`APP_CLAVE`). Desde **Usuarios** el administrador crea las cuentas del equipo, cambia contraseñas y desactiva cuentas. Las contraseñas se guardan cifradas (scrypt) y la sesión dura 30 días. Opcional: define `SESION_SECRETO` para firmar las sesiones con un secreto propio.
+Cada persona entra con su usuario y contraseña. La primera vez que se abre Kafa no hay usuarios: la pantalla pide crear el administrador con la clave de instalación (`APP_CLAVE`). Cada persona del equipo también puede crear su cuenta sola desde la pantalla de entrada con el **código del equipo** (`CODIGO_EQUIPO`, o `APP_CLAVE` si no se define); queda con rol de registro. Desde **Usuarios** el administrador crea cuentas, cambia contraseñas y desactiva cuentas. Las contraseñas se guardan cifradas (scrypt) y la sesión dura 30 días. Opcional: define `SESION_SECRETO` para firmar las sesiones con un secreto propio.
 
 ## Activar la IA
 

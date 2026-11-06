@@ -159,6 +159,23 @@ export async function crearPrimerAdmin(_: Resultado | null, fd: FormData): Promi
   redirect("/");
 }
 
+/** Registro automático: cualquiera con el código del equipo crea su cuenta de registro y entra de una. */
+export async function crearMiCuenta(_: Resultado | null, fd: FormData): Promise<Resultado> {
+  const codigo = (process.env.CODIGO_EQUIPO ?? "").trim() || claveApp();
+  if (!codigo) return { ok: false, error: "El registro con código no está configurado. Pídele la cuenta a un administrador." };
+  if (String(fd.get("codigo") ?? "").trim() !== codigo) return { ok: false, error: "El código del equipo no es correcto." };
+  const r = esquemaUsuario.safeParse(Object.fromEntries(fd));
+  if (!r.success) return { ok: false, error: r.error.issues[0].message };
+  try {
+    await usuarios.crear({ usuario: r.data.usuario, nombre: r.data.nombre, rol: "registro", claveHash: cifrar(r.data.clave), activo: true });
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+  const u = await usuarios.buscar(r.data.usuario);
+  if (u) await iniciarSesion(u);
+  redirect("/");
+}
+
 export async function crearUsuario(_: Resultado | null, fd: FormData): Promise<Resultado> {
   await exigirAdmin();
   const r = esquemaUsuario.extend({ rol: z.enum(["admin", "registro"]) }).safeParse(Object.fromEntries(fd));

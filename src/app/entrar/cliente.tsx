@@ -1,7 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { crearPrimerAdmin, entrar } from "@/app/acciones";
+import { crearMiCuenta, crearPrimerAdmin, entrar } from "@/app/acciones";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
@@ -30,7 +30,7 @@ export function PantallaEntrada({ primeraVez, pideInstalacion, errorInicial }: {
         ) : primeraVez ? (
           <PrimerAdmin pideInstalacion={pideInstalacion} />
         ) : (
-          <Ingreso />
+          <IngresoOCuenta />
         )}
       </div>
     </main>
@@ -87,6 +87,50 @@ function PrimerAdmin({ pideInstalacion }: { pideInstalacion: boolean }) {
         <Button type="submit" size="lg" disabled={enviando}>
           {enviando ? <Loader2 className="animate-spin" aria-hidden /> : null}
           Crear y entrar
+        </Button>
+      </form>
+    </Card>
+  );
+}
+
+function IngresoOCuenta() {
+  const [modo, setModo] = useState<"entrar" | "crear">("entrar");
+  return (
+    <div className="flex flex-col gap-4">
+      {modo === "entrar" ? <Ingreso /> : <CrearCuenta />}
+      <button type="button" onClick={() => setModo(modo === "entrar" ? "crear" : "entrar")} className="min-h-11 rounded-lg text-sm font-medium text-primary hover:underline">
+        {modo === "entrar" ? "¿Eres del equipo y no tienes cuenta? Créala aquí" : "Ya tengo cuenta: entrar"}
+      </button>
+    </div>
+  );
+}
+
+function CrearCuenta() {
+  const [estado, accion, enviando] = useActionState(crearMiCuenta, null);
+  const [f, setF] = useState({ nombre: "", usuario: "" });
+  return (
+    <Card className="p-6">
+      <form action={accion} className="flex flex-col gap-4">
+        <div>
+          <p className="font-semibold">Crea tu cuenta</p>
+          <p className="text-sm text-muted-foreground">Necesitas el código del equipo que te da la Fundación.</p>
+        </div>
+        <Field label="Tu nombre" htmlFor="nombre" hint="Así te va a saludar Kafa.">
+          <Input id="nombre" name="nombre" value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} placeholder="María Fernanda Ruiz" autoComplete="name" required />
+        </Field>
+        <Field label="Usuario" htmlFor="usuario" hint="Minúsculas, sin espacios. Por ejemplo: mariafernanda">
+          <Input id="usuario" name="usuario" value={f.usuario} onChange={(e) => setF({ ...f, usuario: e.target.value })} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
+        </Field>
+        <Field label="Contraseña" htmlFor="clave" hint="Al menos 8 caracteres.">
+          <Input id="clave" name="clave" type="password" autoComplete="new-password" minLength={8} required />
+        </Field>
+        <Field label="Código del equipo" htmlFor="codigo">
+          <Input id="codigo" name="codigo" type="password" autoCapitalize="none" autoCorrect="off" required />
+        </Field>
+        {estado?.error ? <p className="text-sm font-medium text-red-700">{estado.error}</p> : null}
+        <Button type="submit" size="lg" disabled={enviando}>
+          {enviando ? <Loader2 className="animate-spin" aria-hidden /> : null}
+          Crear cuenta y entrar
         </Button>
       </form>
     </Card>
