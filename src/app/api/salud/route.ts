@@ -10,7 +10,7 @@ export async function GET() {
   const r: Record<string, unknown> = {
     supabaseUrl: url ? url.replace(/^(https:\/\/)(.{4}).*(\.supabase\.co.*)$/, "$1$2…$3") : "falta",
     supabaseUrlTerminaBien: url ? /\.supabase\.co\/?$/.test(url) : false,
-    claveSecreta: key ? `${key.slice(0, 10)}… (${key.length} caracteres)` : "falta",
+    claveSecreta: !key ? "falta" : key.startsWith("sb_secret_") ? "parece correcta (sb_secret_)" : key.startsWith("eyJ") ? "parece correcta (service_role)" : key.startsWith("sb_publishable_") ? "es la clave pública: usa la secreta" : "no es una clave de Supabase",
     claveDeAcceso: process.env.APP_CLAVE ? "configurada" : "falta",
     ia: proveedor(),
   };
