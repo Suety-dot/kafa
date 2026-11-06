@@ -57,10 +57,22 @@ const camel = <T,>(o: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(o).map(([k, v]) => [k.replace(/_([a-z])/g, (_, c) => c.toUpperCase()), v])) as T;
 
 function supabase(cli: SupabaseClient): Almacen {
+  // Supabase entrega como máximo 1.000 filas por consulta: se lee en páginas.
   const leer = async <T,>(tabla: string) => {
-    const { data, error } = await cli.from(tabla).select("*").order("fecha", { ascending: true });
-    if (error) throw new Error(`Supabase (${tabla}): ${error.message}`);
-    return (data ?? []).map((r) => {
+    const PAGINA = 1000;
+    const filas: Record<string, unknown>[] = [];
+    for (let desde = 0; ; desde += PAGINA) {
+      const { data, error } = await cli
+        .from(tabla)
+        .select("*")
+        .order("fecha", { ascending: true })
+        .order("id", { ascending: true })
+        .range(desde, desde + PAGINA - 1);
+      if (error) throw new Error(`Supabase (${tabla}): ${error.message}`);
+      filas.push(...(data ?? []));
+      if (!data || data.length < PAGINA) break;
+    }
+    return filas.map((r) => {
       const x = camel<T & { createdAt?: string }>(r);
       delete x.createdAt;
       return x as T;
