@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FileText, Home, List, LogOut, MessageSquare, PlusCircle, Users } from "lucide-react";
+import { BarChart3, ChevronLeft, FileText, Home, List, LogOut, MessageSquare, PlusCircle, Users } from "lucide-react";
 import { Comentar } from "@/components/comentar";
 import { salir } from "@/app/acciones";
 import { cn } from "@/lib/utils";
@@ -86,16 +86,22 @@ export function Shell({ children, modo, usuario }: { children: React.ReactNode; 
 export function Encabezado({ titulo, sub, volver, accion }: { titulo: string; sub?: string; volver?: string; accion?: React.ReactNode }) {
   return (
     <header className="flex flex-wrap items-end justify-between gap-3 px-5 pt-6 pb-4 md:px-8 md:pt-8">
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 items-start gap-2">
         {volver ? (
-          <Link href={volver} className="text-sm text-primary hover:underline">
-            Volver
+          <Link
+            href={volver}
+            aria-label="Volver"
+            title="Volver"
+            className="-ml-2 flex size-10 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted active:bg-muted"
+          >
+            <ChevronLeft className="size-6" aria-hidden />
           </Link>
-        ) : (
-          <span className="text-xs font-semibold tracking-wider text-accent-foreground md:hidden">KAFA · CAFÉ FORMEMOS</span>
-        )}
-        <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
-        {sub ? <p className="text-sm text-muted-foreground">{sub}</p> : null}
+        ) : null}
+        <div className={cn("flex min-w-0 flex-col gap-1", volver && "pt-0.5")}>
+          {volver ? null : <span className="text-xs font-semibold tracking-wider text-accent-foreground md:hidden">KAFA · CAFÉ FORMEMOS</span>}
+          <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
+          {sub ? <p className="text-sm text-muted-foreground">{sub}</p> : null}
+        </div>
       </div>
       {accion}
     </header>
