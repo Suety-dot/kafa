@@ -99,8 +99,8 @@ function supabase(cli: SupabaseClient): Almacen {
 let cache: Almacen | null = null;
 export function almacen(): Almacen {
   if (cache) return cache;
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = (process.env.SUPABASE_URL ?? "").trim().replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").trim();
   cache = url && key ? supabase(createClient(url, key, { auth: { persistSession: false } })) : memoria();
   return cache;
 }
