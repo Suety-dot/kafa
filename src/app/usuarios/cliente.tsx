@@ -20,8 +20,8 @@ export function NuevoUsuario() {
           <Field label="Nombre" htmlFor="nombre" hint="Es el que aparece en el saludo.">
             <Input id="nombre" name="nombre" placeholder="Nombre y apellido" required />
           </Field>
-          <Field label="Usuario" htmlFor="usuario" hint="No es un correo: un nombre corto, en minúsculas y sin espacios. Por ejemplo: ana.gomez">
-            <Input id="usuario" name="usuario" placeholder="ana.gomez" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
+          <Field label="Usuario" htmlFor="usuario" hint="No es un correo: un nombre corto, en minúsculas y sin espacios. Por ejemplo: nombre.apellido">
+            <Input id="usuario" name="usuario" placeholder="nombre.apellido" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
           </Field>
           <Field label="Contraseña inicial" htmlFor="clave" hint="Al menos 8 caracteres. Entrégala en persona.">
             <Input id="clave" name="clave" type="text" minLength={8} autoComplete="off" required />

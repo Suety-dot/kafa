@@ -77,7 +77,7 @@ function PrimerAdmin({ pideInstalacion }: { pideInstalacion: boolean }) {
         <Field label="Tu nombre" htmlFor="nombre">
           <Input id="nombre" name="nombre" placeholder="Nombre y apellido" autoComplete="name" required />
         </Field>
-        <Field label="Usuario" htmlFor="usuario" hint="No es un correo: un nombre corto, en minúsculas y sin espacios. Por ejemplo: ana.gomez">
+        <Field label="Usuario" htmlFor="usuario" hint="No es un correo: un nombre corto, en minúsculas y sin espacios. Por ejemplo: nombre.apellido">
           <Input id="usuario" name="usuario" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
         </Field>
         <Field label="Contraseña" htmlFor="clave" hint="Al menos 8 caracteres.">
@@ -118,7 +118,7 @@ function CrearCuenta() {
         <Field label="Tu nombre" htmlFor="nombre" hint="Así te va a saludar Kafa.">
           <Input id="nombre" name="nombre" value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} placeholder="Nombre y apellido" autoComplete="name" required />
         </Field>
-        <Field label="Usuario" htmlFor="usuario" hint="No es un correo: un nombre corto, en minúsculas y sin espacios. Por ejemplo: ana.gomez">
+        <Field label="Usuario" htmlFor="usuario" hint="No es un correo: un nombre corto, en minúsculas y sin espacios. Por ejemplo: nombre.apellido">
           <Input id="usuario" name="usuario" value={f.usuario} onChange={(e) => setF({ ...f, usuario: e.target.value })} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
         </Field>
         <Field label="Contraseña" htmlFor="clave" hint="Al menos 8 caracteres.">

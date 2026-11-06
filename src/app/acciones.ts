@@ -130,7 +130,7 @@ const esquemaUsuario = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .refine((u) => !u.includes("@"), "El usuario no es un correo: escribe un nombre corto, por ejemplo ana.gomez.")
+    .refine((u) => !u.includes("@"), "El usuario no es un correo: escribe un nombre corto, por ejemplo nombre.apellido.")
     .refine((u) => /^[a-z0-9._-]{3,30}$/.test(u), "El usuario debe tener entre 3 y 30 letras o números, sin espacios ni tildes."),
   nombre: z.string().trim().min(2, "Escribe el nombre.").max(60),
   clave: z.string().min(8, "La contraseña debe tener al menos 8 caracteres.").max(100),
