@@ -126,7 +126,12 @@ async function iniciarSesion(u: usuarios.Usuario) {
 }
 
 const esquemaUsuario = z.object({
-  usuario: z.string().trim().toLowerCase().regex(/^[a-z0-9._-]{3,30}$/, "El usuario debe tener entre 3 y 30 letras o números, sin espacios."),
+  usuario: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((u) => !u.includes("@"), "El usuario no es un correo: escribe un nombre corto, por ejemplo ana.gomez.")
+    .refine((u) => /^[a-z0-9._-]{3,30}$/.test(u), "El usuario debe tener entre 3 y 30 letras o números, sin espacios ni tildes."),
   nombre: z.string().trim().min(2, "Escribe el nombre.").max(60),
   clave: z.string().min(8, "La contraseña debe tener al menos 8 caracteres.").max(100),
 });
@@ -140,6 +145,7 @@ export async function entrar(_: Resultado | null, fd: FormData): Promise<Resulta
   } catch (e) {
     return { ok: false, error: (e as Error).message };
   }
+  if (!u && usuario.includes("@")) return { ok: false, error: "Escribe tu usuario de Kafa, no tu correo." };
   if (!u || !u.activo || !comprobar(clave, u.claveHash)) return { ok: false, error: "Usuario o contraseña incorrectos." };
   await iniciarSesion(u);
   redirect("/");
