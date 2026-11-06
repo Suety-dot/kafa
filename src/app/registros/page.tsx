@@ -4,26 +4,27 @@ import { Encabezado } from "@/components/shell";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { almacen } from "@/lib/store";
-import { mesesDisponibles, nombreMes, tabla, TIPOS, type Tipo } from "@/lib/registros";
+import { mesCorto, mesesDisponibles, nombreMes, tabla, TIPOS, type Tipo } from "@/lib/registros";
+import { listar } from "@/lib/usuarios";
+import { Filtros } from "./filtros";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 const POR_PAGINA = 100;
 
-export default async function Registros({ searchParams }: { searchParams: Promise<{ tipo?: string; mes?: string; q?: string; ver?: string }> }) {
+export default async function Registros({ searchParams }: { searchParams: Promise<{ tipo?: string; mes?: string; cuenta?: string; ver?: string }> }) {
   const sp = await searchParams;
   const tipo: Tipo = (TIPOS.find((t) => t.id === sp.tipo)?.id ?? "compras") as Tipo;
   const d = await almacen().leerTodo();
   const meses = mesesDisponibles(d);
   const mes = sp.mes === "todos" ? "todos" : meses.includes(sp.mes ?? "") ? sp.mes! : meses[0] ?? "todos";
-  const q = (sp.q ?? "").slice(0, 60);
+  const usuarios = await listar().catch(() => []);
+  const nombres = Object.fromEntries(usuarios.map((u) => [u.usuario, u.nombre]));
+  const cuenta = sp.cuenta && sp.cuenta !== "todas" ? sp.cuenta : "todas";
   const ver = Math.min(5000, Math.max(POR_PAGINA, Number(sp.ver) || POR_PAGINA));
-  const t = tabla(d, tipo, mes, q);
-  const url = (cambios: Record<string, string>) => {
-    const p = new URLSearchParams({ tipo, mes, ...(q ? { q } : {}), ...cambios });
-    return `/registros?${p}`;
-  };
-  const csv = `/api/registros?${new URLSearchParams({ tipo, mes, ...(q ? { q } : {}) })}`;
+  const t = tabla(d, tipo, mes, cuenta, nombres);
+  const url = (cambios: Record<string, string>) => `/registros?${new URLSearchParams({ tipo, mes, cuenta, ...cambios })}`;
+  const csv = `/api/registros?${new URLSearchParams({ tipo, mes, cuenta })}`;
 
   return (
     <main className="mx-auto w-full max-w-7xl pb-8">
@@ -42,7 +43,7 @@ export default async function Registros({ searchParams }: { searchParams: Promis
             <Link
               key={x.id}
               href={url({ tipo: x.id })}
-              className={cn("flex h-10 shrink-0 items-center rounded-lg px-4 text-sm text-muted-foreground", x.id === tipo && "border border-border bg-card font-semibold text-foreground shadow-sm")}
+              className={cn("flex h-10 shrink-0 items-center rounded-lg px-4 text-sm text-muted-foreground transition-colors hover:text-foreground", x.id === tipo && "bg-card font-semibold text-foreground shadow-sm ring-1 ring-border")}
               aria-current={x.id === tipo ? "page" : undefined}
             >
               {x.nombre}
@@ -50,27 +51,12 @@ export default async function Registros({ searchParams }: { searchParams: Promis
           ))}
         </nav>
 
-        <form className="flex flex-wrap items-end gap-3" action="/registros">
-          <input type="hidden" name="tipo" value={tipo} />
-          <label className="flex flex-col gap-1.5 text-sm font-medium">
-            Mes
-            <select name="mes" defaultValue={mes} className="h-11 rounded-lg border border-border bg-card px-3 text-base">
-              <option value="todos">Todos</option>
-              {meses.map((m) => (
-                <option key={m} value={m}>
-                  {nombreMes(m)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex min-w-48 flex-1 flex-col gap-1.5 text-sm font-medium">
-            Buscar
-            <input name="q" defaultValue={q} placeholder="Caficultor, cliente, persona…" className="h-11 rounded-lg border border-border bg-card px-3 text-base" />
-          </label>
-          <button type="submit" className={buttonVariants({})}>
-            Filtrar
-          </button>
-        </form>
+        <Filtros
+          meses={meses.slice(0, 12).map((m) => ({ id: m, nombre: mesCorto(m) }))}
+          mes={mes}
+          cuenta={cuenta}
+          cuentas={usuarios.map((u) => ({ id: u.usuario, nombre: u.nombre }))}
+        />
 
         <Card className="overflow-hidden">
           <div className="max-h-[70vh] overflow-auto">
@@ -122,7 +108,8 @@ export default async function Registros({ searchParams }: { searchParams: Promis
           </Link>
         ) : null}
         <p className="text-xs text-muted-foreground">
-          {nombreMesTexto(mes)} · {t.filas.length} registros. Las compras sobre el techo aparecen resaltadas.
+          {nombreMesTexto(mes)}
+          {cuenta !== "todas" ? ` · ${nombres[cuenta] ?? cuenta}` : ""} · {t.filas.length} {t.filas.length === 1 ? "registro" : "registros"}. Las compras sobre el techo aparecen resaltadas.
         </p>
       </div>
     </main>
