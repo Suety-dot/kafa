@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
+import { CampoFecha } from "@/components/campo-fecha";
 import { cn } from "@/lib/utils";
 
 const OPERADORES = ["José", "Alibrio", "Michael", "Estudiantes en práctica"];
@@ -24,17 +25,15 @@ export function FormBache({ hoy }: { hoy: string }) {
   return (
     <form action={accion} className="flex flex-col gap-4 px-5 md:px-8">
       <Segmented name="tipo" label="Tipo de bache" value={tipo} onChange={setTipo} options={[{ value: "servicio", label: "Servicio a caficultor" }, { value: "propio", label: "Café de la Fundación" }]} />
+      <CampoFecha hoy={hoy} />
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Fecha" htmlFor="fecha">
-          <Input id="fecha" name="fecha" type="date" defaultValue={hoy} required />
-        </Field>
         {tipo === "servicio" ? (
-          <Field label="Caficultor" htmlFor="caficultor">
-            <Input id="caficultor" name="caficultor" placeholder="Caficultor 042" required />
-          </Field>
-        ) : (
-          <div />
-        )}
+          <div className="col-span-2">
+            <Field label="Caficultor" htmlFor="caficultor" hint="Usa el código del caficultor, no su nombre.">
+              <Input id="caficultor" name="caficultor" placeholder="Caficultor 042" required />
+            </Field>
+          </div>
+        ) : null}
         <Field label="Kilos de pergamino" htmlFor="kilosCps">
           <Input id="kilosCps" name="kilosCps" inputMode="decimal" value={kilos} onChange={(e) => setKilos(e.target.value)} required />
         </Field>

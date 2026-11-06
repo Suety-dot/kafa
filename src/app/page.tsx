@@ -8,9 +8,12 @@ import { margenLbTena } from "@/lib/modelo";
 import { sesionActual } from "@/lib/sesion-servidor";
 import { primerNombre } from "@/lib/sesion";
 import { salir } from "@/app/acciones";
-import { LogOut, Users } from "lucide-react";
+import { Bean, ChevronRight, LogOut, Users } from "lucide-react";
+import { fechaCorta, fechaLarga, fechaTexto, hoyBogota } from "@/lib/fechas";
 
 export const dynamic = "force-dynamic";
+
+const ICONO = { compra: Bean, bache: Flame, venta: ShoppingBag, gasto: Truck };
 
 const MENSAJE: Record<string, string> = {
   compra: "Compra guardada",
@@ -26,10 +29,13 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
   const m = calcular(d);
   const ultimo = m.compras.recientes.at(-1);
 
+  const hoy = hoyBogota();
+  const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
   const registros = [
-    ...d.compras.map((c) => ({ f: c.fecha, h: c.creado ?? "", t: `Compra · ${c.caficultor}`, s: `${c.calidad} · ${fmt(c.kilos)} kg ${c.unidad === "cps" ? "pergamino" : "verde"}`, v: pesos(c.kilos * c.precioKg) })),
-    ...d.baches.map((b) => ({ f: b.fecha, h: b.creado ?? "", t: `Bache · ${b.tipo === "servicio" ? "servicio" : "café propio"}`, s: `${fmt(b.kilosCps)} kg cps · ${b.minutos} min`, v: b.tipo === "servicio" ? pesos(b.kilosCps * 3800) : "" })),
-    ...d.ventas.map((v) => ({ f: v.fecha, h: v.creado ?? "", t: `Venta · ${v.cliente}`, s: `${v.linea} · ${fmt(v.libras)} lb`, v: pesos(v.libras * v.precioLb) })),
+    ...d.compras.map((c) => ({ k: "compra" as const, f: c.fecha, h: c.creado ?? "", t: c.caficultor, s: `Compra · ${cap(c.calidad)} · ${fmt(c.kilos)} kg ${c.unidad === "cps" ? "pergamino" : "verde"}`, v: pesos(c.kilos * c.precioKg) })),
+    ...d.baches.map((b) => ({ k: "bache" as const, f: b.fecha, h: b.creado ?? "", t: b.tipo === "servicio" ? b.caficultor || "Servicio de tostión" : "Café de la Fundación", s: `Bache · ${fmt(b.kilosCps)} kg pergamino · ${b.minutos} min`, v: b.tipo === "servicio" ? pesos(b.kilosCps * 3800) : "" })),
+    ...d.ventas.map((v) => ({ k: "venta" as const, f: v.fecha, h: v.creado ?? "", t: v.cliente, s: `Venta · ${cap(v.linea)} · ${fmt(v.libras)} lb`, v: pesos(v.libras * v.precioLb) })),
+    ...d.gastos.map((g) => ({ k: "gasto" as const, f: g.fecha, h: g.creado ?? "", t: g.descripcion || cap(g.tipo === "energia" ? "energía" : g.tipo), s: `Gasto · ${g.tipo === "flete" ? "Flete" : g.tipo === "energia" ? "Energía" : g.tipo === "mantenimiento" ? "Mantenimiento" : "Otro"}`, v: `−${pesos(g.valor)}` })),
   ]
     .sort((a, b) => b.f.localeCompare(a.f) || b.h.localeCompare(a.h))
     .slice(0, 5);
@@ -45,17 +51,17 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-6">
       <Encabezado
         titulo={yo ? `Hola, ${primerNombre(yo.nombre)}` : "Hola"}
-        sub={new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric", timeZone: "America/Bogota" }).format(new Date())}
+        sub={cap(fechaLarga(hoy, hoy))}
         accion={
-          <div className="flex gap-2 md:hidden">
+          <div className="flex gap-2 self-start md:hidden">
             {yo?.rol === "admin" ? (
-              <Link href="/usuarios" className="flex h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground">
-                <Users className="size-4" aria-hidden /> Usuarios
+              <Link href="/usuarios" aria-label="Usuarios" title="Usuarios" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
+                <Users className="size-[18px]" aria-hidden />
               </Link>
             ) : null}
             <form action={salir}>
-              <button type="submit" className="flex h-11 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm text-muted-foreground">
-                <LogOut className="size-4" aria-hidden /> Salir
+              <button type="submit" aria-label="Salir" title="Salir" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
+                <LogOut className="size-[18px]" aria-hidden />
               </button>
             </form>
           </div>
@@ -88,7 +94,7 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
             <div>
               <p className="text-sm font-semibold text-warn-fg">{ultimo.sobreTecho ? "Última compra sobre el techo" : "Última compra cerca del techo"}</p>
               <p className="text-sm text-orange-900">
-                El lote del {ultimo.fecha} quedó a {pesos(ultimo.porCps)} por kg cps. El techo para {ultimo.destino === "sustituir" ? "sustituir" : "este destino"} es {pesos(ultimo.techo)}.
+                El lote del {fechaTexto(ultimo.fecha)} quedó a {pesos(ultimo.porCps)} por kg cps. El techo para {ultimo.destino === "sustituir" ? "sustituir" : "este destino"} es {pesos(ultimo.techo)}.
               </p>
             </div>
           </div>
@@ -112,19 +118,31 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
           ))}
         </div>
 
-        <p className="text-sm font-semibold text-muted-foreground">Últimos registros</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-muted-foreground">Últimos registros</p>
+          <Link href="/registros" className="flex items-center gap-0.5 text-sm font-medium text-primary">
+            Ver todos <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </div>
         <Card className="divide-y divide-muted">
-          {registros.map((r, i) => (
-            <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{r.t}</p>
-                <p className="text-xs text-muted-foreground">
-                  {r.f} · {r.s}
-                </p>
+          {registros.map((r, i) => {
+            const Icono = ICONO[r.k];
+            return (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                  <Icono className="size-4" aria-hidden />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{r.t}</p>
+                  <p className="truncate text-xs text-muted-foreground">{r.s}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-0.5">
+                  <span className="tabular text-sm font-semibold">{r.v}</span>
+                  <span className="text-xs text-muted-foreground">{fechaCorta(r.f, hoy)}</span>
+                </div>
               </div>
-              <span className="tabular shrink-0 text-sm font-semibold">{r.v}</span>
-            </div>
-          ))}
+            );
+          })}
         </Card>
       </div>
     </main>

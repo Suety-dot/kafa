@@ -1,4 +1,5 @@
 import { Encabezado } from "@/components/shell";
+import { diaMes, mesTexto } from "@/lib/fechas";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { almacen } from "@/lib/store";
@@ -15,7 +16,7 @@ export default async function Tablero() {
 
   return (
     <main className="mx-auto w-full max-w-6xl pb-8">
-      <Encabezado titulo="Tablero del café" sub={`Mes en curso · ${m.mesActual}`} />
+      <Encabezado titulo="Tablero del café" sub={`${mesTexto(m.mesActual)} · mes en curso`} />
       <div className="flex flex-col gap-4 px-5 md:px-8">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Kpi etiqueta="Margen por kilo verde · venta nueva" valor={pesos(m.margenes.nuevo)} nota={`Sustituir deja ${pesos(m.margenes.sustituir)}`} />
@@ -69,7 +70,7 @@ export default async function Tablero() {
               {m.compras.recientes.length === 0 ? <p className="text-sm text-muted-foreground">Aún no hay compras.</p> : null}
               {m.compras.recientes.map((c) => (
                 <div key={c.id} className="grid grid-cols-[88px_minmax(0,1fr)_76px] items-center gap-3 text-sm">
-                  <span className="text-muted-foreground">{c.fecha.slice(5)}</span>
+                  <span className="text-muted-foreground">{diaMes(c.fecha)}</span>
                   <div className="relative h-3.5 rounded bg-muted">
                     <div className={cn("h-3.5 rounded", c.sobreTecho ? "bg-amber-700" : "bg-ocre")} style={{ width: `${(c.porCps / escalaCompra) * 100}%` }} />
                     <div className="absolute -top-1 h-5.5 w-0.5 bg-foreground" style={{ left: `${(m.techos.sustituir / escalaCompra) * 100}%` }} aria-hidden />

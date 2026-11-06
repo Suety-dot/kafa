@@ -1,5 +1,6 @@
 import { ESCALERA, SUPUESTOS, kgVerde, margenKgVerde, margenLbMaquila, margenLbTena, normalizarPrecio, techoCompra } from "./modelo";
 import type { Datos } from "./tipos";
+import { fechaCorta, fechaTexto, hoyBogota } from "./fechas";
 
 /** Todas las cifras que muestran el tablero y el informe. Se calculan aquí; la IA solo las lee. */
 
@@ -7,7 +8,7 @@ const mesDe = (f: string) => f.slice(0, 7);
 const NOMBRE_MES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
 export function calcular(d: Datos, hoy = new Date()) {
-  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+  const mesActual = hoyBogota().slice(0, 7);
 
   // Torrefactora
   const bachesMes = d.baches.filter((b) => mesDe(b.fecha) === mesActual);
@@ -80,7 +81,7 @@ export function calcular(d: Datos, hoy = new Date()) {
     if (c.sobreTecho)
       alertas.push({
         nivel: "alto",
-        titulo: `Compra del ${c.fecha} sobre el techo`,
+        titulo: `Compra del ${fechaTexto(c.fecha)} sobre el techo`,
         texto: `Quedó a $${fmt(c.porCps)} por kg cps; el techo para ${c.destino === "sustituir" ? "sustituir" : c.destino === "migrar" ? "migrar" : "ventas nuevas"} es $${fmt(c.techo)}.${c.destino === "sustituir" ? " Sirve para ventas nuevas." : ""}`,
       });
   }
@@ -94,19 +95,19 @@ export function calcular(d: Datos, hoy = new Date()) {
   for (const [k, x] of porCliente) {
     const dias = (hoy.getTime() - new Date(x.ultimoCambio).getTime()) / 86400000;
     if (dias > 60 && k.endsWith("institucional"))
-      alertas.push({ nivel: "info", titulo: `Revisar precio con ${k.split("|")[0]}`, texto: `Su precio no cambia desde el ${x.ultimoCambio}; la política pide revisarlo cada dos meses.` });
+      alertas.push({ nivel: "info", titulo: `Revisar precio con ${k.split("|")[0]}`, texto: `Su precio no cambia desde el ${fechaTexto(x.ultimoCambio)}; la política pide revisarlo cada dos meses.` });
   }
   const ventasTenaMes = ventasMes.filter((v) => v.origen === "tena").length;
   const fletesMes = d.gastos.filter((x) => x.tipo === "flete" && mesDe(x.fecha) === mesActual).length;
   if (ventasTenaMes > fletesMes)
-    alertas.push({ nivel: "info", titulo: "Fletes sin registrar", texto: `Hay ${ventasTenaMes} ventas de café de Tena este mes y ${fletesMes} fletes registrados.` });
+    alertas.push({ nivel: "info", titulo: "Fletes sin registrar", texto: `Hay ${ventasTenaMes} ${ventasTenaMes === 1 ? "venta" : "ventas"} de café de Tena este mes y ${fletesMes} ${fletesMes === 1 ? "flete registrado" : "fletes registrados"}.` });
 
   // Escalera
   const mesesPiloto = d.estado.inicioPiloto ? (hoy.getTime() - new Date(d.estado.inicioPiloto).getTime()) / (30.44 * 86400000) : 0;
   const condiciones =
     escenario.n === 1
       ? [
-          { texto: "Prueba de taza aprobada", ok: !!d.estado.tazaAprobada, dato: d.estado.tazaAprobada ?? "Pendiente" },
+          { texto: "Prueba de taza aprobada", ok: !!d.estado.tazaAprobada, dato: d.estado.tazaAprobada ? fechaCorta(d.estado.tazaAprobada) : "Pendiente" },
           { texto: "Costo por kilo bajo el techo", ok: sustitucion.length > 0 && bajoTecho / sustitucion.length >= 0.8, dato: `${bajoTecho} de ${sustitucion.length} lotes` },
           { texto: "Tres meses sin reclamos de clientes premium", ok: mesesPiloto >= 3 && d.estado.reclamosPremium === 0, dato: `Mes ${Math.min(3, Math.floor(mesesPiloto) + 1)} de 3` },
         ]

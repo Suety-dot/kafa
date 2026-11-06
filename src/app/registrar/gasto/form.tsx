@@ -5,6 +5,7 @@ import { guardarGasto } from "@/app/acciones";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
+import { CampoFecha } from "@/components/campo-fecha";
 
 export function FormGasto({ hoy }: { hoy: string }) {
   const [estado, accion, enviando] = useActionState(guardarGasto, null);
@@ -14,14 +15,10 @@ export function FormGasto({ hoy }: { hoy: string }) {
   return (
     <form action={accion} className="flex flex-col gap-4 px-5 md:px-8">
       <Segmented name="tipo" label="Tipo" value={tipo} onChange={setTipo} options={[{ value: "flete", label: "Flete" }, { value: "energia", label: "Energía" }, { value: "mantenimiento", label: "Manten." }, { value: "otro", label: "Otro" }]} />
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Fecha" htmlFor="fecha">
-          <Input id="fecha" name="fecha" type="date" defaultValue={hoy} required />
-        </Field>
-        <Field label="Valor" htmlFor="valor">
-          <Input id="valor" inputMode="numeric" placeholder="$66.000" value={valor} onChange={(e) => setValor(e.target.value)} required />
-        </Field>
-      </div>
+      <CampoFecha hoy={hoy} />
+      <Field label="Valor" htmlFor="valor">
+        <Input id="valor" inputMode="numeric" placeholder="$66.000" value={valor} onChange={(e) => setValor(e.target.value)} required />
+      </Field>
       <Field label="Descripción" htmlFor="descripcion" hint={tipo === "flete" ? "Por ejemplo: envío Tena a Bogotá, 60 kg tostados." : undefined}>
         <Input id="descripcion" name="descripcion" maxLength={200} />
       </Field>

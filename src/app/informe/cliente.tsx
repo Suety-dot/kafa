@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { SelectorModelo, useModelo } from "@/components/selector-modelo";
+import { useModelo } from "@/components/selector-modelo";
 
 const TITULOS = ["Resumen", "Torrefactora", "Compras y precio", "Ventas", "Escalera de inversión", "Alertas"];
 
@@ -55,7 +55,7 @@ export function Redactar({ conIa }: { conIa: boolean }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {!conIa ? <p className="text-sm text-muted-foreground">La IA está desactivada. Configura la clave de Anthropic en Vercel para activarla.</p> : <SelectorModelo disabled={cargando} />}
+        {!conIa ? <p className="text-sm text-muted-foreground">La IA está desactivada. Configura la clave de Anthropic en Vercel para activarla.</p> : null}
         {error ? <p className="text-sm font-medium text-red-700">{error}</p> : null}
         {cargando && !texto ? <p className="text-sm text-muted-foreground">Redactando con las cifras del mes…</p> : null}
         {bloques.map((b, i) =>

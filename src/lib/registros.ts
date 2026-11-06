@@ -9,17 +9,27 @@ export const TIPOS: { id: Tipo; nombre: string }[] = [
   { id: "compras", nombre: "Compras" },
   { id: "baches", nombre: "Baches" },
   { id: "ventas", nombre: "Ventas" },
-  { id: "gastos", nombre: "Fletes y gastos" },
+  { id: "gastos", nombre: "Gastos" },
 ];
 
 export interface Columna {
   titulo: string;
   num?: boolean;
 }
+export interface Fila {
+  celdas: (string | number)[];
+  /** Texto de cada columna; la primera es la fecha AAAA-MM-DD (así sale en el CSV). */
+  texto: string[];
+  alerta?: boolean;
+  /** Vista compacta para el celular. */
+  movil: { titulo: string; detalle: string; valor: string };
+}
 export interface Tabla {
   columnas: Columna[];
-  filas: { celdas: (string | number)[]; texto: (string)[]; alerta?: boolean }[];
+  filas: Fila[];
   total: string[];
+  /** Cifras del periodo filtrado para la franja de resumen. */
+  resumen: { etiqueta: string; valor: string }[];
 }
 
 const pl = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
@@ -49,9 +59,19 @@ export function tabla(d: Datos, tipo: Tipo, mes: string, cuenta: string, nombres
           alerta: sobre,
           celdas: [],
           texto: [c.fecha, c.caficultor, CALIDAD[c.calidad] ?? c.calidad, c.unidad === "cps" ? "Pergamino" : "Verde", fmt(c.kilos, 1).replace(/,0$/, ""), pesos(c.precioKg), pesos(porCps), pesos(c.kilos * c.precioKg), DESTINO[c.destino] ?? c.destino, sobre ? "Sobre el techo" : "Bajo el techo", c.leidaPorIa ? "Sí" : "No", quien(c.registradoPor)],
+          movil: {
+            titulo: c.caficultor,
+            detalle: `${CALIDAD[c.calidad] ?? c.calidad} · ${fmt(c.kilos, 1).replace(/,0$/, "")} kg ${c.unidad === "cps" ? "pergamino" : "verde"} a ${pesos(c.precioKg)}${sobre ? " · sobre el techo" : ""}`,
+            valor: pesos(c.kilos * c.precioKg),
+          },
         };
       }),
       total: [pl(xs.length, "compra", "compras"), "", "", "", fmt(kilos), "", "", pesos(total), "", "", "", ""],
+      resumen: [
+        { etiqueta: "Compras", valor: String(xs.length) },
+        { etiqueta: "Kilos", valor: fmt(kilos) },
+        { etiqueta: "Total pagado", valor: pesos(total) },
+      ],
     };
   }
   if (tipo === "baches") {
@@ -63,8 +83,18 @@ export function tabla(d: Datos, tipo: Tipo, mes: string, cuenta: string, nombres
       filas: xs.map((b) => ({
         celdas: [],
         texto: [b.fecha, b.tipo === "servicio" ? "Servicio" : "Café propio", b.caficultor ?? "", fmt(b.kilosCps, 1).replace(/,0$/, ""), String(b.minutos), b.perfil[0].toUpperCase() + b.perfil.slice(1), b.operadores.join(", "), b.pedagogico ? "Sí" : "No", b.tipo === "servicio" ? pesos(b.kilosCps * 3800) : "", quien(b.registradoPor)],
+        movil: {
+          titulo: b.tipo === "servicio" ? b.caficultor || "Servicio" : "Café de la Fundación",
+          detalle: `${fmt(b.kilosCps, 1).replace(/,0$/, "")} kg · ${b.minutos} min · ${b.perfil}${b.pedagogico ? " · práctica" : ""}`,
+          valor: b.tipo === "servicio" ? pesos(b.kilosCps * 3800) : "",
+        },
       })),
       total: [pl(xs.length, "bache", "baches"), "", "", fmt(kg), fmt(min), "", "", pl(xs.filter((b) => b.pedagogico).length, "pedagógico", "pedagógicos"), pesos(xs.filter((b) => b.tipo === "servicio").reduce((s, b) => s + b.kilosCps * 3800, 0)), ""],
+      resumen: [
+        { etiqueta: "Baches", valor: fmt(xs.length) },
+        { etiqueta: "Kg pergamino", valor: fmt(kg) },
+        { etiqueta: "Ingreso por servicio", valor: pesos(xs.filter((b) => b.tipo === "servicio").reduce((s, b) => s + b.kilosCps * 3800, 0)) },
+      ],
     };
   }
   if (tipo === "ventas") {
@@ -73,15 +103,33 @@ export function tabla(d: Datos, tipo: Tipo, mes: string, cuenta: string, nombres
     const total = xs.reduce((s, v) => s + v.libras * v.precioLb, 0);
     return {
       columnas: [{ titulo: "Fecha" }, { titulo: "Cliente" }, { titulo: "Línea" }, { titulo: "Tostado en" }, { titulo: "Libras", num: true }, { titulo: "Precio por libra", num: true }, { titulo: "Total", num: true }, { titulo: "Registró" }],
-      filas: xs.map((v) => ({ celdas: [], texto: [v.fecha, v.cliente, LINEA[v.linea] ?? v.linea, v.origen === "tena" ? "Tena" : "Maquila", fmt(v.libras, 1).replace(/,0$/, ""), pesos(v.precioLb), pesos(v.libras * v.precioLb), quien(v.registradoPor)] })),
+      filas: xs.map((v) => ({
+        celdas: [],
+        texto: [v.fecha, v.cliente, LINEA[v.linea] ?? v.linea, v.origen === "tena" ? "Tena" : "Maquila", fmt(v.libras, 1).replace(/,0$/, ""), pesos(v.precioLb), pesos(v.libras * v.precioLb), quien(v.registradoPor)],
+        movil: { titulo: v.cliente, detalle: `${LINEA[v.linea] ?? v.linea} · ${fmt(v.libras, 1).replace(/,0$/, "")} lb a ${pesos(v.precioLb)} · ${v.origen === "tena" ? "Tena" : "maquila"}`, valor: pesos(v.libras * v.precioLb) },
+      })),
       total: [pl(xs.length, "venta", "ventas"), "", "", "", fmt(lb), "", pesos(total), ""],
+      resumen: [
+        { etiqueta: "Ventas", valor: String(xs.length) },
+        { etiqueta: "Libras", valor: fmt(lb) },
+        { etiqueta: "Total vendido", valor: pesos(total) },
+      ],
     };
   }
   const xs = d.gastos.filter((g) => enMes(g.fecha) && deCuenta(g.registradoPor)).sort(orden);
   return {
     columnas: [{ titulo: "Fecha" }, { titulo: "Tipo" }, { titulo: "Descripción" }, { titulo: "Valor", num: true }, { titulo: "Registró" }],
-    filas: xs.map((g) => ({ celdas: [], texto: [g.fecha, GASTO[g.tipo] ?? g.tipo, g.descripcion ?? "", pesos(g.valor), quien(g.registradoPor)] })),
+    filas: xs.map((g) => ({
+      celdas: [],
+      texto: [g.fecha, GASTO[g.tipo] ?? g.tipo, g.descripcion ?? "", pesos(g.valor), quien(g.registradoPor)],
+      movil: { titulo: g.descripcion || (GASTO[g.tipo] ?? g.tipo), detalle: GASTO[g.tipo] ?? g.tipo, valor: pesos(g.valor) },
+    })),
     total: [pl(xs.length, "registro", "registros"), "", "", pesos(xs.reduce((s, g) => s + g.valor, 0)), ""],
+    resumen: [
+      { etiqueta: "Gastos", valor: String(xs.length) },
+      { etiqueta: "Fletes", valor: String(xs.filter((g) => g.tipo === "flete").length) },
+      { etiqueta: "Total", valor: pesos(xs.reduce((s, g) => s + g.valor, 0)) },
+    ],
   };
 }
 

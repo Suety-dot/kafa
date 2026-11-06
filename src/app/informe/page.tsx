@@ -4,6 +4,8 @@ import { almacen } from "@/lib/store";
 import { calcular, fmt, pct, pesos } from "@/lib/metricas";
 import { proveedor } from "@/lib/ia";
 import { Redactar, Preguntar } from "./cliente";
+import { SelectorModelo } from "@/components/selector-modelo";
+import { mesTexto } from "@/lib/fechas";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,7 @@ export default async function Informe() {
   ];
   return (
     <main className="mx-auto w-full max-w-6xl pb-8">
-      <Encabezado titulo="Informe mensual" sub={`Mes en curso · ${m.mesActual}`} />
+      <Encabezado titulo="Informe mensual" sub={`${mesTexto(m.mesActual)} · mes en curso`} />
       <div className="grid gap-4 px-5 md:px-8 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex flex-col gap-4">
           <Card>
@@ -39,6 +41,11 @@ export default async function Informe() {
               ))}
             </CardContent>
           </Card>
+          {conIa ? (
+            <Card className="p-4 lg:max-w-md">
+              <SelectorModelo />
+            </Card>
+          ) : null}
           <Redactar conIa={conIa} />
         </div>
         <Preguntar conIa={conIa} />
