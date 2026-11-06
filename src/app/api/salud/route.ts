@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { proveedor } from "@/lib/ia";
+import { claveAnthropic, proveedor } from "@/lib/ia";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +13,13 @@ export async function GET() {
     claveSecreta: !key ? "falta" : key.startsWith("sb_secret_") ? "parece correcta (sb_secret_)" : key.startsWith("eyJ") ? "parece correcta (service_role)" : key.startsWith("sb_publishable_") ? "es la clave pública: usa la secreta" : "no es una clave de Supabase",
     claveDeAcceso: process.env.APP_CLAVE ? "configurada" : "falta",
     ia: proveedor(),
+    iaProveedorEscrito: process.env.IA_PROVEEDOR === undefined ? "falta" : `"${process.env.IA_PROVEEDOR}"`,
+    claveAnthropic: (() => {
+      const k = claveAnthropic();
+      if (!k) return "falta";
+      if (k.startsWith("sk-ant-")) return "parece correcta (sk-ant-)";
+      return "no parece una clave de Anthropic (debe empezar por sk-ant-)";
+    })(),
   };
   if (url && key) {
     try {

@@ -11,15 +11,24 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export type Proveedor = "anthropic" | "ollama" | "ninguno";
 
+/** Limpia espacios, comillas y mayúsculas que se cuelan al pegar valores en Vercel. */
+const limpio = (v?: string) => (v ?? "").trim().replace(/^["']|["']$/g, "").trim();
+
+export function claveAnthropic(): string {
+  return limpio(process.env.ANTHROPIC_API_KEY);
+}
+
 export function proveedor(): Proveedor {
-  const p = (process.env.IA_PROVEEDOR ?? "").toLowerCase();
-  if (p === "anthropic" && process.env.ANTHROPIC_API_KEY) return "anthropic";
+  const p = limpio(process.env.IA_PROVEEDOR).toLowerCase();
   if (p === "ollama") return "ollama";
+  if (p === "ninguno") return "ninguno";
+  // Con la clave de Anthropic basta: si IA_PROVEEDOR falta o está mal escrito, se usa Anthropic.
+  if (claveAnthropic()) return "anthropic";
   return "ninguno";
 }
 
-const MODELO_RAPIDO = process.env.IA_MODELO_RAPIDO ?? "claude-haiku-4-5-20251001";
-const MODELO_REDACCION = process.env.IA_MODELO_REDACCION ?? "claude-sonnet-5-5";
+const MODELO_RAPIDO = limpio(process.env.IA_MODELO_RAPIDO) || "claude-haiku-4-5-20251001";
+const MODELO_REDACCION = limpio(process.env.IA_MODELO_REDACCION) || "claude-sonnet-5-5";
 const OLLAMA_URL = process.env.OLLAMA_URL ?? "http://localhost:11434";
 const OLLAMA_MODELO = process.env.OLLAMA_MODELO ?? "qwen2.5vl:7b";
 
@@ -36,7 +45,7 @@ async function pedir({ sistema, texto, imagen, rapido = true, maxTokens = 800 }:
   if (p === "ninguno") throw new Error("IA desactivada");
 
   if (p === "anthropic") {
-    const cliente = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const cliente = new Anthropic({ apiKey: claveAnthropic() });
     const contenido: Anthropic.ContentBlockParam[] = [];
     if (imagen)
       contenido.push({
