@@ -38,9 +38,11 @@ interface Pedido {
   imagen?: { base64: string; tipo: string };
   rapido?: boolean;
   maxTokens?: number;
+  /** Modelo elegido en la aplicación; si falta se usa el de la tarea. */
+  modelo?: string | null;
 }
 
-async function pedir({ sistema, texto, imagen, rapido = true, maxTokens = 800 }: Pedido): Promise<string> {
+async function pedir({ sistema, texto, imagen, rapido = true, maxTokens = 800, modelo }: Pedido): Promise<string> {
   const p = proveedor();
   if (p === "ninguno") throw new Error("IA desactivada");
 
@@ -54,7 +56,7 @@ async function pedir({ sistema, texto, imagen, rapido = true, maxTokens = 800 }:
       });
     contenido.push({ type: "text", text: texto });
     const r = await cliente.messages.create({
-      model: rapido ? MODELO_RAPIDO : MODELO_REDACCION,
+      model: modelo || (rapido ? MODELO_RAPIDO : MODELO_REDACCION),
       max_tokens: maxTokens,
       system: sistema,
       messages: [{ role: "user", content: contenido }],
@@ -96,7 +98,7 @@ export interface LecturaRecibo {
   notas: string;
 }
 
-export async function leerRecibo(base64: string, tipo: string): Promise<LecturaRecibo> {
+export async function leerRecibo(base64: string, tipo: string, modelo?: string | null): Promise<LecturaRecibo> {
   const sistema =
     "Lees recibos de compra de café en Colombia. Devuelves solo JSON. No inventes: si un dato no aparece o no es legible, pon null. " +
     "No copies nombres de personas: el caficultor se registra aparte con un identificador.";
@@ -107,21 +109,21 @@ export async function leerRecibo(base64: string, tipo: string): Promise<LecturaR
     '"calidad":"consumo"|"excelso"|"premium"|"especial"|null,"total":número o null,' +
     '"notas":"una frase corta sobre lo que no se pudo leer o lo que conviene revisar"}. ' +
     "Los precios en Colombia usan punto como separador de miles: 25.900 es veinticinco mil novecientos.";
-  return extraerJson<LecturaRecibo>(await pedir({ sistema, texto, imagen: { base64, tipo }, rapido: true, maxTokens: 400 }));
+  return extraerJson<LecturaRecibo>(await pedir({ sistema, texto, imagen: { base64, tipo }, rapido: true, maxTokens: 400, modelo }));
 }
 
-export async function redactarInforme(cifras: unknown, mes: string): Promise<string> {
+export async function redactarInforme(cifras: unknown, mes: string, modelo?: string | null): Promise<string> {
   const sistema =
     "Redactas el informe mensual del café de la Fundación Formemos para su Comité Directivo, en español neutro de Colombia, en tercera persona y con tono sobrio. " +
     "Usa SOLO las cifras del JSON que recibes, copiadas tal cual; no calcules cifras nuevas ni redondees distinto. Si falta un dato, dilo. " +
     "Sin guiones largos. Estructura con estos títulos en líneas propias: Resumen, Torrefactora, Compras y precio, Ventas, Escalera de inversión, Alertas. " +
     "Cada sección en uno o dos párrafos cortos.";
-  return pedir({ sistema, texto: `Mes: ${mes}\nCifras calculadas por la aplicación:\n${JSON.stringify(cifras)}`, rapido: false, maxTokens: 1500 });
+  return pedir({ sistema, texto: `Mes: ${mes}\nCifras calculadas por la aplicación:\n${JSON.stringify(cifras)}`, rapido: false, maxTokens: 1500, modelo });
 }
 
-export async function responderPregunta(pregunta: string, contexto: unknown): Promise<string> {
+export async function responderPregunta(pregunta: string, contexto: unknown, modelo?: string | null): Promise<string> {
   const sistema =
     "Respondes preguntas sobre los registros del café de la Fundación Formemos. Usa SOLO los datos del JSON. " +
     "Si la respuesta no está en los datos, dilo y sugiere qué registro haría falta. Respuesta corta, en español neutro, cifras con punto de miles.";
-  return pedir({ sistema, texto: `Datos:\n${JSON.stringify(contexto)}\n\nPregunta: ${pregunta}`, rapido: true, maxTokens: 500 });
+  return pedir({ sistema, texto: `Datos:\n${JSON.stringify(contexto)}\n\nPregunta: ${pregunta}`, rapido: true, maxTokens: 500, modelo });
 }

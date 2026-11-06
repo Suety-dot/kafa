@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
 import { Segmented } from "@/components/ui/segmented";
+import { SelectorModelo, useModelo } from "@/components/selector-modelo";
 
 type Calidad = "consumo" | "excelso" | "premium" | "especial";
 type Unidad = "cps" | "verde";
@@ -38,6 +39,7 @@ export function FormCompra({ techos, factor, conIa, hoy }: { techos: Record<Dest
   const [unidad, setUnidad] = useState<Unidad | "">("");
   const [destino, setDestino] = useState<Destino>("sustituir");
   const entrada = useRef<HTMLInputElement>(null);
+  const [modelo] = useModelo();
 
   async function alElegirFoto(e: React.ChangeEvent<HTMLInputElement>) {
     const a = e.target.files?.[0];
@@ -51,7 +53,7 @@ export function FormCompra({ techos, factor, conIa, hoy }: { techos: Record<Dest
     setLeyendo(true);
     setAviso(null);
     try {
-      const r = await fetch("/api/ia/recibo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ base64, tipo }) });
+      const r = await fetch("/api/ia/recibo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ base64, tipo, modelo }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error);
       setF((x) => ({
@@ -103,6 +105,8 @@ export function FormCompra({ techos, factor, conIa, hoy }: { techos: Record<Dest
         </Button>
         <input ref={entrada} type="file" accept="image/*" capture="environment" className="sr-only" onChange={alElegirFoto} aria-label="Foto del recibo" />
       </Card>
+
+      {conIa ? <SelectorModelo disabled={leyendo} /> : null}
 
       {aviso ? (
         <p role="status" className="flex gap-2 rounded-lg bg-accent px-3 py-2 text-sm text-accent-foreground">

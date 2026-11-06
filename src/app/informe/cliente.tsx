@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SelectorModelo, useModelo } from "@/components/selector-modelo";
 
 const TITULOS = ["Resumen", "Torrefactora", "Compras y precio", "Ventas", "Escalera de inversión", "Alertas"];
 
 export function Redactar({ conIa }: { conIa: boolean }) {
+  const [modelo] = useModelo();
   const [texto, setTexto] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
@@ -17,7 +19,7 @@ export function Redactar({ conIa }: { conIa: boolean }) {
     setCargando(true);
     setError("");
     try {
-      const r = await fetch("/api/ia/informe", { method: "POST" });
+      const r = await fetch("/api/ia/informe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ modelo }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error);
       setTexto(j.texto);
@@ -53,7 +55,7 @@ export function Redactar({ conIa }: { conIa: boolean }) {
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {!conIa ? <p className="text-sm text-muted-foreground">La IA está desactivada. Configura IA_PROVEEDOR para activarla.</p> : null}
+        {!conIa ? <p className="text-sm text-muted-foreground">La IA está desactivada. Configura la clave de Anthropic en Vercel para activarla.</p> : <SelectorModelo disabled={cargando} />}
         {error ? <p className="text-sm font-medium text-red-700">{error}</p> : null}
         {cargando && !texto ? <p className="text-sm text-muted-foreground">Redactando con las cifras del mes…</p> : null}
         {bloques.map((b, i) =>
@@ -78,6 +80,7 @@ export function Redactar({ conIa }: { conIa: boolean }) {
 }
 
 export function Preguntar({ conIa }: { conIa: boolean }) {
+  const [modelo] = useModelo();
   const [p, setP] = useState("");
   const [hilo, setHilo] = useState<{ q: string; a: string }[]>([]);
   const [cargando, setCargando] = useState(false);
@@ -88,7 +91,7 @@ export function Preguntar({ conIa }: { conIa: boolean }) {
     setCargando(true);
     setP("");
     try {
-      const r = await fetch("/api/ia/pregunta", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pregunta: q }) });
+      const r = await fetch("/api/ia/pregunta", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pregunta: q, modelo }) });
       const j = await r.json();
       setHilo((h) => [...h, { q, a: r.ok ? j.texto : j.error }]);
     } catch (e) {
