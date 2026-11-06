@@ -1,20 +1,21 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FileText, Home, LogOut, PlusCircle, Users } from "lucide-react";
+import { BarChart3, FileText, Home, List, LogOut, PlusCircle, Users } from "lucide-react";
 import { salir } from "@/app/acciones";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/registrar", label: "Registrar", icon: PlusCircle },
+  { href: "/registros", label: "Registros", icon: List },
   { href: "/tablero", label: "Tablero", icon: BarChart3 },
   { href: "/informe", label: "Informe", icon: FileText },
 ];
 
 export function Shell({ children, modo, usuario }: { children: React.ReactNode; modo: string; usuario: { nombre: string; rol: string } | null }) {
   const path = usePathname();
-  const activo = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const activo = (href: string) => (href === "/" ? path === "/" : href === "/registrar" ? path === "/registrar" || path.startsWith("/registrar/") : path.startsWith(href));
   if (path === "/entrar") return <div className="flex min-h-dvh flex-col">{children}</div>;
   return (
     <div className="flex min-h-dvh">
@@ -57,7 +58,7 @@ export function Shell({ children, modo, usuario }: { children: React.ReactNode; 
 
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
 
-      <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] backdrop-blur md:hidden">
+      <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] backdrop-blur md:hidden">
         {NAV.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
