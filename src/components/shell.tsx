@@ -14,6 +14,7 @@ const NAV = [
 export function Shell({ children, modo }: { children: React.ReactNode; modo: string }) {
   const path = usePathname();
   const activo = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  if (path === "/entrar") return <div className="flex min-h-dvh flex-col">{children}</div>;
   return (
     <div className="flex min-h-dvh">
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-1 border-r border-border bg-card px-4 py-6 md:flex">
