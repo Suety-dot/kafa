@@ -1,69 +1,119 @@
-import Image from "next/image";
+import Link from "next/link";
+import { AlertTriangle, Camera, CheckCircle2, Flame, ShoppingBag, Truck } from "lucide-react";
+import { Encabezado } from "@/components/shell";
+import { Card } from "@/components/ui/card";
+import { almacen } from "@/lib/store";
+import { calcular, fmt, pct, pesos } from "@/lib/metricas";
+import { margenLbTena } from "@/lib/modelo";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+const MENSAJE: Record<string, string> = {
+  compra: "Compra guardada",
+  bache: "Bache guardado",
+  venta: "Venta guardada",
+  gasto: "Gasto guardado",
+};
+
+export default async function Inicio({ searchParams }: { searchParams: Promise<{ guardado?: string }> }) {
+  const { guardado } = await searchParams;
+  const d = await almacen().leerTodo();
+  const m = calcular(d);
+  const ultimo = m.compras.recientes.at(-1);
+
+  const registros = [
+    ...d.compras.map((c) => ({ f: c.fecha, t: `Compra · ${c.caficultor}`, s: `${c.calidad} · ${fmt(c.kilos)} kg ${c.unidad === "cps" ? "pergamino" : "verde"}`, v: pesos(c.kilos * c.precioKg) })),
+    ...d.baches.map((b) => ({ f: b.fecha, t: `Bache · ${b.tipo === "servicio" ? "servicio" : "café propio"}`, s: `${fmt(b.kilosCps)} kg cps · ${b.minutos} min`, v: b.tipo === "servicio" ? pesos(b.kilosCps * 3800) : "" })),
+    ...d.ventas.map((v) => ({ f: v.fecha, t: `Venta · ${v.cliente}`, s: `${v.linea} · ${fmt(v.libras)} lb`, v: pesos(v.libras * v.precioLb) })),
+  ]
+    .sort((a, b) => b.f.localeCompare(a.f))
+    .slice(0, 5);
+
+  const acciones = [
+    { href: "/registrar/compra", label: "Compra", icon: Camera, primaria: true },
+    { href: "/registrar/bache", label: "Bache", icon: Flame },
+    { href: "/registrar/venta", label: "Venta", icon: ShoppingBag },
+    { href: "/registrar/gasto", label: "Flete o gasto", icon: Truck },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-6">
+      <Encabezado titulo="Hola" sub={new Intl.DateTimeFormat("es-CO", { month: "long", year: "numeric" }).format(new Date())} />
+
+      <div className="flex flex-col gap-4 px-5 md:px-8">
+        {guardado && MENSAJE[guardado] ? (
+          <div role="status" className="flex items-center gap-2 rounded-xl border border-green-200 bg-ok-bg px-4 py-3 text-sm font-medium text-ok-fg">
+            <CheckCircle2 className="size-4" aria-hidden /> {MENSAJE[guardado]}
+          </div>
+        ) : null}
+
+        <Card className="p-4">
+          <p className="mb-3 text-sm font-semibold text-muted-foreground">Este mes</p>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Dato valor={`${fmt(m.torrefactora.kgCpsMes)} kg`} etiqueta="pergamino procesado" />
+            <Dato valor={pct(m.torrefactora.usoMes)} etiqueta="uso de la torrefactora" />
+            <Dato valor={`${fmt(m.fondo.inventarioKgVerde)} kg`} etiqueta="verde en el fondo" />
+            <Dato valor={pesos(margenLbTena(m.compras.precioPromedioCps || undefined))} etiqueta="margen por libra en Tena" acento />
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted" aria-hidden>
+            <div className="h-2 bg-ocre" style={{ width: `${Math.min(100, m.torrefactora.usoMes * 100)}%` }} />
+          </div>
+        </Card>
+
+        {ultimo && ultimo.porCps > ultimo.techo * 0.97 ? (
+          <div className="flex gap-3 rounded-xl border border-orange-200 bg-warn-bg p-4">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-orange-700" aria-hidden />
+            <div>
+              <p className="text-sm font-semibold text-warn-fg">{ultimo.sobreTecho ? "Última compra sobre el techo" : "Última compra cerca del techo"}</p>
+              <p className="text-sm text-orange-900">
+                El lote del {ultimo.fecha} quedó a {pesos(ultimo.porCps)} por kg cps. El techo para {ultimo.destino === "sustituir" ? "sustituir" : "este destino"} es {pesos(ultimo.techo)}.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        <p className="text-sm font-semibold text-muted-foreground">Registrar</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {acciones.map(({ href, label, icon: Icon, primaria }) => (
+            <Link
+              key={href}
+              href={href}
+              className={
+                primaria
+                  ? "flex min-h-20 flex-col justify-between rounded-xl bg-primary p-4 text-primary-foreground"
+                  : "flex min-h-20 flex-col justify-between rounded-xl border border-border bg-card p-4"
+              }
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <Icon className={primaria ? "size-6" : "size-6 text-primary"} aria-hidden />
+              <span className="text-[15px] font-semibold">{label}</span>
+            </Link>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+        <p className="text-sm font-semibold text-muted-foreground">Últimos registros</p>
+        <Card className="divide-y divide-muted">
+          {registros.map((r, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{r.t}</p>
+                <p className="text-xs text-muted-foreground">
+                  {r.f} · {r.s}
+                </p>
+              </div>
+              <span className="tabular shrink-0 text-sm font-semibold">{r.v}</span>
+            </div>
+          ))}
+        </Card>
+      </div>
+    </main>
+  );
+}
+
+function Dato({ valor, etiqueta, acento }: { valor: string; etiqueta: string; acento?: boolean }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className={`tabular text-2xl font-bold ${acento ? "text-primary" : ""}`}>{valor}</span>
+      <span className="text-xs text-muted-foreground">{etiqueta}</span>
     </div>
   );
 }
