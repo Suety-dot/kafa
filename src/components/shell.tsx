@@ -18,7 +18,7 @@ export function Shell({ children, modo }: { children: React.ReactNode; modo: str
     <div className="flex min-h-dvh">
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-1 border-r border-border bg-card px-4 py-6 md:flex">
         <Link href="/" className="mb-6 px-2">
-          <span className="block text-lg font-bold tracking-tight">Arriero</span>
+          <span className="block text-lg font-bold tracking-tight">Kafa</span>
           <span className="block text-xs font-semibold tracking-wider text-accent-foreground">CAFÉ FORMEMOS</span>
         </Link>
         {NAV.map(({ href, label, icon: Icon }) => (
@@ -66,7 +66,7 @@ export function Encabezado({ titulo, sub, volver, accion }: { titulo: string; su
             Volver
           </Link>
         ) : (
-          <span className="text-xs font-semibold tracking-wider text-accent-foreground md:hidden">ARRIERO · CAFÉ FORMEMOS</span>
+          <span className="text-xs font-semibold tracking-wider text-accent-foreground md:hidden">KAFA · CAFÉ FORMEMOS</span>
         )}
         <h1 className="text-2xl font-bold tracking-tight">{titulo}</h1>
         {sub ? <p className="text-sm text-muted-foreground">{sub}</p> : null}

@@ -1,4 +1,4 @@
-# Arriero · instrucciones para Claude Code
+# Kafa · instrucciones para Claude Code
 
 Aplicación de registro y seguimiento del café de la Fundación Formemos (Tena, Cundinamarca). Prototipo del Grupo 33 de Consultandes, Universidad de los Andes. Lee también AGENTS.md: esta versión de Next.js (16) tiene cambios; consulta `node_modules/next/dist/docs/` antes de usar una API que no conozcas.
 

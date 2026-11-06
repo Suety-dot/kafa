@@ -2,17 +2,18 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Shell } from "@/components/shell";
 import { almacen } from "@/lib/store";
+import { RegistrarSW } from "@/components/registrar-sw";
 
 export const metadata: Metadata = {
-  title: "Arriero · Café Formemos",
-  description: "Registro y seguimiento del café de la Fundación Formemos",
-  appleWebApp: { capable: true, title: "Arriero", statusBarStyle: "default" },
+  title: "Kafa · Café Formemos",
+  description: "El asistente que lleva las cuentas del café de la Fundación Formemos",
+  appleWebApp: { capable: true, title: "Kafa", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#fafafa",
+  themeColor: "#8a5f20",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased">
+        <RegistrarSW />
         <Shell modo={almacen().modo}>{children}</Shell>
       </body>
     </html>

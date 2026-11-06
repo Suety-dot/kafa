@@ -16,7 +16,7 @@ async function exigirSesion() {
   const clave = process.env.APP_CLAVE;
   if (!clave) return;
   const c = await cookies();
-  if (c.get("arriero_sesion")?.value !== clave) throw new Error("Sin sesión");
+  if (c.get("kafa_sesion")?.value !== clave) throw new Error("Sin sesión");
 }
 
 const num = z.coerce.number().finite();
@@ -113,6 +113,6 @@ export async function entrar(_: Resultado | null, fd: FormData): Promise<Resulta
   const clave = process.env.APP_CLAVE;
   if (!clave || fd.get("clave") !== clave) return { ok: false, error: "Clave incorrecta." };
   const c = await cookies();
-  c.set("arriero_sesion", clave, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 30, path: "/" });
+  c.set("kafa_sesion", clave, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 30, path: "/" });
   redirect("/");
 }

@@ -12,7 +12,7 @@ export default function Entrar() {
       <Card className="w-full max-w-sm p-6">
         <form action={accion} className="flex flex-col gap-4">
           <div>
-            <p className="text-xl font-bold">Arriero</p>
+            <p className="text-xl font-bold">Kafa</p>
             <p className="text-sm text-muted-foreground">Café Formemos · escribe la clave de acceso</p>
           </div>
           <Field label="Clave" htmlFor="clave">

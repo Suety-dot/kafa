@@ -21,10 +21,10 @@ export interface Almacen {
 }
 
 // ---------------------------------------------------------------- memoria
-const g = globalThis as unknown as { __arrieroDatos?: Datos };
+const g = globalThis as unknown as { __kafaDatos?: Datos };
 function memoria(): Almacen {
-  if (!g.__arrieroDatos) g.__arrieroDatos = datosDeEjemplo();
-  const d = g.__arrieroDatos;
+  if (!g.__kafaDatos) g.__kafaDatos = datosDeEjemplo();
+  const d = g.__kafaDatos;
   const nid = () => Math.random().toString(36).slice(2, 10);
   return {
     modo: "memoria",

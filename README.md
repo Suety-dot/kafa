@@ -1,6 +1,6 @@
-# Arriero
+# Kafa
 
-Registro y seguimiento del café de la Fundación Formemos. Los arrieros bajaban el café en mula desde las fincas hasta los pueblos; esta aplicación lleva los datos del café desde Tena hasta las decisiones del Comité.
+Registro y seguimiento del café de la Fundación Formemos. Kafa es la región de Etiopía de donde viene la palabra café. Es el asistente que lleva las cuentas del café de Tena, del recibo de compra a las decisiones del Comité.
 
 Prototipo del Grupo 33 de Consultandes (Universidad de los Andes), construido como extra de la Etapa 3.
 
@@ -17,8 +17,8 @@ Reglas de diseño: la IA nunca calcula cifras (las calcula `src/lib/modelo.ts` y
 Necesitas [Node.js 22 o posterior](https://nodejs.org) y [Git](https://git-scm.com/downloads/win).
 
 ```powershell
-git clone https://github.com/Suety-dot/arriero.git
-cd arriero
+git clone https://github.com/Suety-dot/kafa.git
+cd kafa
 npm install
 npm run dev
 ```
@@ -53,6 +53,16 @@ La clave `service_role` solo se usa en el servidor. No la subas a GitHub (`.env.
 1. Entra a [Vercel](https://vercel.com) con tu GitHub e importa el repositorio.
 2. En Environment Variables agrega las mismas variables de `.env.local`, incluida `APP_CLAVE` para que pida una clave de acceso.
 3. Publica. En Vercel la memoria no persiste entre solicitudes: para la demostración publicada, configura Supabase.
+
+## Instalarla como aplicación
+
+Kafa es una aplicación web instalable: una vez publicada en Vercel (con su dirección https), se instala desde el navegador y queda con su ícono, en pantalla completa y sin barra del navegador.
+
+- **Android (Chrome):** abre la dirección y toca "Instalar aplicación" o menú > "Agregar a la pantalla principal".
+- **iPhone (Safari):** botón Compartir > "Agregar a inicio".
+- **PC (Chrome o Edge):** ícono de instalar en la barra de direcciones, o menú > "Instalar Kafa". Queda en el menú Inicio como cualquier programa.
+
+Si más adelante se necesita un archivo descargable (APK para Android, instalador para Windows o publicación en tiendas), [PWABuilder](https://www.pwabuilder.com) los genera a partir de la dirección publicada, sin cambiar el código.
 
 ## Estructura
 

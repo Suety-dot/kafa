@@ -1,4 +1,4 @@
--- Esquema de Arriero para Supabase (Postgres).
+-- Esquema de Kafa para Supabase (Postgres).
 -- Ejecútalo en el SQL Editor de tu proyecto. La aplicación usa la clave service_role
 -- solo en el servidor; por eso las tablas tienen RLS activado y sin políticas públicas.
 
