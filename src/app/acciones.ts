@@ -8,6 +8,7 @@ import { claveApp } from "@/lib/clave";
 import { COOKIE, firmar, opcionesCookie, verificar, type Sesion } from "@/lib/sesion";
 import { cifrar, comprobar } from "@/lib/claves";
 import * as usuarios from "@/lib/usuarios";
+import { crearComentario, marcarComentario } from "@/lib/comentarios";
 
 /**
  * Acciones del servidor. Cada una valida lo que llega (las acciones se pueden llamar por POST directo)
@@ -215,4 +216,30 @@ export async function salir() {
   const c = await cookies();
   c.delete(COOKIE);
   redirect("/entrar");
+}
+
+// ---------------------------------------------------------------- comentarios
+export async function enviarComentario(_: Resultado | null, fd: FormData): Promise<Resultado> {
+  const yo = await exigirSesion();
+  const r = z
+    .object({
+      tipo: z.enum(["idea", "error", "diseno", "otro"]),
+      texto: z.string().trim().min(3, "Escribe el comentario.").max(2000),
+      pantalla: z.string().max(200),
+    })
+    .safeParse(Object.fromEntries(fd));
+  if (!r.success) return { ok: false, error: r.error.issues[0].message };
+  try {
+    await crearComentario({ ...r.data, usuario: yo.usuario, nombre: yo.nombre });
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+  revalidatePath("/comentarios");
+  return { ok: true, mensaje: "¡Gracias! Comentario enviado." };
+}
+
+export async function cambiarComentario(fd: FormData) {
+  await exigirAdmin();
+  await marcarComentario(String(fd.get("id") ?? ""), fd.get("resuelto") === "1");
+  revalidatePath("/comentarios");
 }

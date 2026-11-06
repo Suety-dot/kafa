@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FileText, Home, List, LogOut, PlusCircle, Users } from "lucide-react";
+import { BarChart3, FileText, Home, List, LogOut, MessageSquare, PlusCircle, Users } from "lucide-react";
+import { Comentar } from "@/components/comentar";
 import { salir } from "@/app/acciones";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,12 @@ export function Shell({ children, modo, usuario }: { children: React.ReactNode; 
             Usuarios
           </Link>
         ) : null}
+        {usuario?.rol === "admin" ? (
+          <Link href="/comentarios" className={cn("flex h-10 items-center gap-3 rounded-lg px-3 text-sm text-zinc-700 hover:bg-muted", activo("/comentarios") && "bg-muted font-semibold text-foreground")}>
+            <MessageSquare className="size-4" aria-hidden />
+            Comentarios
+          </Link>
+        ) : null}
         <div className="mt-auto flex flex-col gap-2 px-2">
           {usuario ? (
             <form action={salir} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
@@ -56,7 +63,9 @@ export function Shell({ children, modo, usuario }: { children: React.ReactNode; 
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col pb-[calc(8.5rem+env(safe-area-inset-bottom))] md:pb-20">{children}</div>
+
+      {usuario ? <Comentar /> : null}
 
       <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),0.5rem)] backdrop-blur md:hidden">
         {NAV.map(({ href, label, icon: Icon }) => (

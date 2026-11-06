@@ -8,7 +8,7 @@ import { margenLbTena } from "@/lib/modelo";
 import { sesionActual } from "@/lib/sesion-servidor";
 import { primerNombre } from "@/lib/sesion";
 import { salir } from "@/app/acciones";
-import { Bean, ChevronRight, LogOut, Users } from "lucide-react";
+import { Bean, ChevronRight, LogOut, MessageSquare, Users } from "lucide-react";
 import { fechaCorta, fechaLarga, fechaTexto, hoyBogota } from "@/lib/fechas";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +57,11 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
             {yo?.rol === "admin" ? (
               <Link href="/usuarios" aria-label="Usuarios" title="Usuarios" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
                 <Users className="size-[18px]" aria-hidden />
+              </Link>
+            ) : null}
+            {yo?.rol === "admin" ? (
+              <Link href="/comentarios" aria-label="Comentarios" title="Comentarios" className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
+                <MessageSquare className="size-[18px]" aria-hidden />
               </Link>
             ) : null}
             <form action={salir}>
