@@ -98,18 +98,74 @@ export interface LecturaRecibo {
   notas: string;
 }
 
-export async function leerRecibo(base64: string, tipo: string, modelo?: string | null): Promise<LecturaRecibo> {
+/** Lo que la IA copia del recibo, tal como está escrito. Las conversiones las hace la aplicación. */
+export interface LecturaCruda {
+  fecha: string | null;
+  cantidad: number | null;
+  medida: "kg" | "arroba" | "carga" | "libra" | null;
+  precioUnitario: number | null;
+  total: number | null;
+  unidad: "cps" | "verde" | null;
+  calidad: "consumo" | "excelso" | "premium" | "especial" | null;
+  notas: string;
+}
+
+/** Kilos por cada medida usada en el campo colombiano. */
+export const KILOS_POR: Record<string, number> = { kg: 1, arroba: 12.5, carga: 125, libra: 0.5 };
+const NOMBRE_MEDIDA: Record<string, [string, string]> = { kg: ["kilo", "kilos"], arroba: ["arroba", "arrobas"], carga: ["carga", "cargas"], libra: ["libra", "libras"] };
+const miles = (n: number) => new Intl.NumberFormat("es-CO", { maximumFractionDigits: 1 }).format(n);
+
+/** Convierte la lectura cruda a kilos y pesos por kilo, y revisa que el total cuadre. Sin IA: solo aritmética. */
+export function normalizarLectura(c: LecturaCruda, hoy: string): LecturaRecibo {
+  const notas: string[] = [];
+  const num = (x: unknown) => (typeof x === "number" && Number.isFinite(x) && x > 0 ? x : null);
+  const cantidad = num(c.cantidad);
+  const unitario = num(c.precioUnitario);
+  const total = num(c.total);
+  const medida = c.medida && KILOS_POR[c.medida] ? c.medida : cantidad ? "kg" : null;
+  const factor = medida ? KILOS_POR[medida] : 1;
+  const kilos = cantidad ? Math.round(cantidad * factor * 10) / 10 : null;
+
+  let precioKg: number | null = null;
+  if (unitario) precioKg = Math.round(unitario / factor);
+  else if (total && kilos) {
+    precioKg = Math.round(total / kilos);
+    notas.push("El precio por kilo no estaba escrito: Kafa lo calculó con el total y los kilos.");
+  }
+  if (medida && medida !== "kg" && cantidad)
+    notas.push(`Decía ${miles(cantidad)} ${NOMBRE_MEDIDA[medida][cantidad === 1 ? 0 : 1]}${unitario ? ` a $${miles(unitario)} por ${NOMBRE_MEDIDA[medida][0]}` : ""}: Kafa lo pasó a ${miles(kilos!)} kg${precioKg ? ` a $${miles(precioKg)} por kilo` : ""}.`);
+  if (total && kilos && precioKg && unitario) {
+    const esperado = kilos * precioKg;
+    if (Math.abs(esperado - total) / total > 0.02) notas.push(`El total escrito ($${miles(total)}) no cuadra con kilos por precio ($${miles(esperado)}). Revísalo.`);
+  }
+
+  let fecha = c.fecha && /^\d{4}-\d{2}-\d{2}$/.test(c.fecha) ? c.fecha : null;
+  if (fecha && fecha > hoy) {
+    notas.push("La fecha leída quedó en el futuro; se dejó la de hoy.");
+    fecha = null;
+  }
+  if (c.notas) notas.push(c.notas);
+  return { fecha, kilos, precioKg, unidad: c.unidad ?? null, calidad: c.calidad ?? null, total, notas: notas.join(" ") };
+}
+
+export async function leerRecibo(base64: string, tipo: string, modelo?: string | null, hoy = new Date().toISOString().slice(0, 10)): Promise<LecturaRecibo> {
   const sistema =
-    "Lees recibos de compra de café en Colombia. Devuelves solo JSON. No inventes: si un dato no aparece o no es legible, pon null. " +
-    "No copies nombres de personas: el caficultor se registra aparte con un identificador.";
+    "Lees recibos y notas de compra de café en Colombia, impresos o escritos a mano por personas distintas, sin un formato fijo. " +
+    "Copias los datos tal como están escritos; no conviertes unidades ni haces cuentas. Devuelves solo JSON. " +
+    "No inventes: si un dato no aparece o no es legible, pon null. No copies nombres de personas.";
   const texto =
-    "Extrae de este recibo un JSON con estas claves exactas: " +
-    '{"fecha":"AAAA-MM-DD o null","kilos":número o null,"precioKg":número en pesos por kilo o null,' +
-    '"unidad":"cps" si dice pergamino o pergamino seco, "verde" si dice verde o excelso, null si no se sabe,' +
-    '"calidad":"consumo"|"excelso"|"premium"|"especial"|null,"total":número o null,' +
-    '"notas":"una frase corta sobre lo que no se pudo leer o lo que conviene revisar"}. ' +
-    "Los precios en Colombia usan punto como separador de miles: 25.900 es veinticinco mil novecientos.";
-  return extraerJson<LecturaRecibo>(await pedir({ sistema, texto, imagen: { base64, tipo }, rapido: true, maxTokens: 400, modelo }));
+    `Hoy es ${hoy}. Extrae un JSON con estas claves exactas: ` +
+    '{"fecha":"AAAA-MM-DD o null (si no tiene año, usa el año de hoy; en Colombia la fecha va día/mes/año)",' +
+    '"cantidad":número tal como está escrito o null,' +
+    '"medida":"kg" (kilos, kg, k), "arroba" (arroba, @, @s), "carga" (carga, cargas), "libra" (libra, lb) o null,' +
+    '"precioUnitario":precio por cada medida tal como está escrito, en pesos, o null,' +
+    '"total":valor total escrito en pesos o null,' +
+    '"unidad":"cps" si dice pergamino, pergamino seco, cps o seco; "verde" si dice verde, excelso o almendra; null si no se sabe,' +
+    '"calidad":"consumo"|"excelso"|"premium"|"especial"|null (pasilla o corriente cuentan como consumo; especial, de especialidad o microlote como especial),' +
+    '"notas":"una frase corta sobre lo que no se pudo leer o conviene revisar, o vacío"}. ' +
+    "Los precios usan punto de miles: 25.900 es veinticinco mil novecientos; 1.2M o 1,2 millones es 1200000; \"25 mil\" es 25000.";
+  const cruda = extraerJson<LecturaCruda>(await pedir({ sistema, texto, imagen: { base64, tipo }, rapido: true, maxTokens: 400, modelo }));
+  return normalizarLectura(cruda, hoy);
 }
 
 export async function redactarInforme(cifras: unknown, mes: string, modelo?: string | null): Promise<string> {
