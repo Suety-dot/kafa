@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { almacen } from "@/lib/store";
+import { claveApp } from "@/lib/clave";
 
 /**
  * Acciones del servidor. Cada una valida lo que llega (las acciones se pueden llamar por POST directo)
@@ -13,7 +14,7 @@ import { almacen } from "@/lib/store";
 export type Resultado = { ok: boolean; error?: string };
 
 async function exigirSesion() {
-  const clave = process.env.APP_CLAVE;
+  const clave = claveApp();
   if (!clave) return;
   const c = await cookies();
   if (c.get("kafa_sesion")?.value !== clave) throw new Error("Sin sesión");
@@ -110,8 +111,10 @@ export async function guardarGasto(_: Resultado | null, fd: FormData): Promise<R
 }
 
 export async function entrar(_: Resultado | null, fd: FormData): Promise<Resultado> {
-  const clave = process.env.APP_CLAVE;
-  if (!clave || fd.get("clave") !== clave) return { ok: false, error: "Clave incorrecta." };
+  const clave = claveApp();
+  const escrita = String(fd.get("clave") ?? "").trim();
+  if (!clave) redirect("/");
+  if (escrita !== clave) return { ok: false, error: "Clave incorrecta. Revisa mayúsculas y que sea la misma de APP_CLAVE en Vercel." };
   const c = await cookies();
   c.set("kafa_sesion", clave, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 30, path: "/" });
   redirect("/");

@@ -16,7 +16,7 @@ export default function Entrar() {
             <p className="text-sm text-muted-foreground">Café Formemos · escribe la clave de acceso</p>
           </div>
           <Field label="Clave" htmlFor="clave">
-            <Input id="clave" name="clave" type="password" autoComplete="current-password" required />
+            <Input id="clave" name="clave" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} required />
           </Field>
           {estado?.error ? <p className="text-sm font-medium text-red-700">{estado.error}</p> : null}
           <Button type="submit" disabled={enviando}>
