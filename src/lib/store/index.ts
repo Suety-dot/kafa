@@ -32,16 +32,16 @@ function memoria(): Almacen {
       return structuredClone(d);
     },
     async agregarCompra(c) {
-      d.compras.push({ ...c, id: nid() });
+      d.compras.push({ ...c, id: nid(), creado: new Date().toISOString() });
     },
     async agregarBache(b) {
-      d.baches.push({ ...b, id: nid() });
+      d.baches.push({ ...b, id: nid(), creado: new Date().toISOString() });
     },
     async agregarVenta(v) {
-      d.ventas.push({ ...v, id: nid() });
+      d.ventas.push({ ...v, id: nid(), creado: new Date().toISOString() });
     },
     async agregarGasto(x) {
-      d.gastos.push({ ...x, id: nid() });
+      d.gastos.push({ ...x, id: nid(), creado: new Date().toISOString() });
     },
     async actualizarEstado(e) {
       Object.assign(d.estado, e);
@@ -73,13 +73,16 @@ function supabase(cli: SupabaseClient): Almacen {
       if (!data || data.length < PAGINA) break;
     }
     return filas.map((r) => {
-      const x = camel<T & { createdAt?: string }>(r);
+      const x = camel<T & { createdAt?: string; creado?: string }>(r);
+      x.creado = x.createdAt;
       delete x.createdAt;
       return x as T;
     });
   };
   const insertar = async (tabla: string, fila: object) => {
-    const { error } = await cli.from(tabla).insert(snake(fila as Record<string, unknown>));
+    const { creado: _c, ...resto } = fila as Record<string, unknown>;
+    void _c;
+    const { error } = await cli.from(tabla).insert(snake(resto));
     if (error) throw new Error(`Supabase (${tabla}): ${error.message}`);
   };
   return {

@@ -9,6 +9,8 @@ export type TipoGasto = "flete" | "energia" | "mantenimiento" | "otro";
 export interface Compra {
   id: string;
   fecha: string; // AAAA-MM-DD
+  /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
+  creado?: string;
   caficultor: string;
   calidad: Calidad;
   unidad: Unidad;
@@ -21,7 +23,9 @@ export interface Compra {
 
 export interface Bache {
   id: string;
-  fecha: string;
+  fecha: string; // AAAA-MM-DD
+  /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
+  creado?: string;
   tipo: "servicio" | "propio";
   caficultor?: string | null;
   kilosCps: number;
@@ -33,7 +37,9 @@ export interface Bache {
 
 export interface Venta {
   id: string;
-  fecha: string;
+  fecha: string; // AAAA-MM-DD
+  /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
+  creado?: string;
   cliente: string;
   linea: Linea;
   origen: Origen;
@@ -43,7 +49,9 @@ export interface Venta {
 
 export interface Gasto {
   id: string;
-  fecha: string;
+  fecha: string; // AAAA-MM-DD
+  /** Momento en que se guardó el registro (ISO); ordena los del mismo día. */
+  creado?: string;
   tipo: TipoGasto;
   valor: number;
   descripcion?: string | null;

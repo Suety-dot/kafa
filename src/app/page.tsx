@@ -22,11 +22,11 @@ export default async function Inicio({ searchParams }: { searchParams: Promise<{
   const ultimo = m.compras.recientes.at(-1);
 
   const registros = [
-    ...d.compras.map((c) => ({ f: c.fecha, t: `Compra · ${c.caficultor}`, s: `${c.calidad} · ${fmt(c.kilos)} kg ${c.unidad === "cps" ? "pergamino" : "verde"}`, v: pesos(c.kilos * c.precioKg) })),
-    ...d.baches.map((b) => ({ f: b.fecha, t: `Bache · ${b.tipo === "servicio" ? "servicio" : "café propio"}`, s: `${fmt(b.kilosCps)} kg cps · ${b.minutos} min`, v: b.tipo === "servicio" ? pesos(b.kilosCps * 3800) : "" })),
-    ...d.ventas.map((v) => ({ f: v.fecha, t: `Venta · ${v.cliente}`, s: `${v.linea} · ${fmt(v.libras)} lb`, v: pesos(v.libras * v.precioLb) })),
+    ...d.compras.map((c) => ({ f: c.fecha, h: c.creado ?? "", t: `Compra · ${c.caficultor}`, s: `${c.calidad} · ${fmt(c.kilos)} kg ${c.unidad === "cps" ? "pergamino" : "verde"}`, v: pesos(c.kilos * c.precioKg) })),
+    ...d.baches.map((b) => ({ f: b.fecha, h: b.creado ?? "", t: `Bache · ${b.tipo === "servicio" ? "servicio" : "café propio"}`, s: `${fmt(b.kilosCps)} kg cps · ${b.minutos} min`, v: b.tipo === "servicio" ? pesos(b.kilosCps * 3800) : "" })),
+    ...d.ventas.map((v) => ({ f: v.fecha, h: v.creado ?? "", t: `Venta · ${v.cliente}`, s: `${v.linea} · ${fmt(v.libras)} lb`, v: pesos(v.libras * v.precioLb) })),
   ]
-    .sort((a, b) => b.f.localeCompare(a.f))
+    .sort((a, b) => b.f.localeCompare(a.f) || b.h.localeCompare(a.h))
     .slice(0, 5);
 
   const acciones = [
